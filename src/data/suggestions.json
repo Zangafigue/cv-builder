@@ -1,0 +1,89 @@
+{
+  "categories": [
+    {
+      "id": "tech",
+      "label": "Tech & Informatique",
+      "icon": "💻",
+      "suggestions": {
+        "summary": [
+          "Développeur passionné avec X ans d'expérience dans la création d'applications web performantes et évolutives.",
+          "Ingénieur logiciel spécialisé en développement full-stack, avec une forte expertise en conception d'architectures microservices.",
+          "Expert en résolution de problèmes complexes, orienté performance et qualité du code avec une approche Test-Driven Development (TDD)."
+        ],
+        "experience": [
+          "Conception et développement de nouvelles fonctionnalités en suivant une méthodologie Agile/Scrum.",
+          "Optimisation des performances de l'application, réduisant le temps de chargement de 40%.",
+          "Mise en place d'une pipeline CI/CD complète avec GitHub Actions et Docker.",
+          "Mentorat de développeurs juniors et revues de code régulières pour maintenir la qualité.",
+          "Développement et maintenance d'une API RESTful consommée par plus de 10 000 utilisateurs actifs.",
+          "Migration de l'architecture monolithique vers des microservices, améliorant la scalabilité.",
+          "Rédaction de tests unitaires et d'intégration atteignant une couverture de code de 90%."
+        ],
+        "skills": ["React", "Node.js", "TypeScript", "Python", "Docker", "AWS", "PostgreSQL", "MongoDB", "GraphQL", "Git"]
+      }
+    },
+    {
+      "id": "management",
+      "label": "Management & Gestion de projet",
+      "icon": "📊",
+      "suggestions": {
+        "summary": [
+          "Manager expérimenté avec une solide capacité à fédérer des équipes pluridisciplinaires autour d'objectifs communs.",
+          "Chef de projet certifié PMP, reconnu pour sa rigueur dans la gestion des délais, des budgets et des risques.",
+          "Leader orienté résultats avec une approche data-driven pour la prise de décision stratégique."
+        ],
+        "experience": [
+          "Pilotage de projets de A à Z dans le respect des délais et des budgets alloués.",
+          "Management d'une équipe de X personnes, dont la définition des objectifs individuels et l'évaluation annuelle.",
+          "Optimisation des processus internes, réduisant les délais de livraison de 25%.",
+          "Coordination des parties prenantes (clients, prestataires, direction) pour assurer l'alignement sur les priorités.",
+          "Mise en place et suivi de tableaux de bord KPI pour mesurer la performance des équipes.",
+          "Gestion d'un budget de X€ et reporting mensuel à la direction générale."
+        ],
+        "skills": ["Gestion de projet", "Agile/Scrum", "JIRA", "Communication", "Leadership", "Budget", "Reporting", "PMP", "Stakeholder Management"]
+      }
+    },
+    {
+      "id": "marketing",
+      "label": "Marketing & Communication",
+      "icon": "📢",
+      "suggestions": {
+        "summary": [
+          "Spécialiste marketing digital avec une expertise en acquisition de trafic, SEO et gestion des réseaux sociaux.",
+          "Profil créatif et analytique, capable de concevoir des stratégies de contenu à fort impact et de les mesurer précisément.",
+          "Expert en brand marketing avec une passion pour la création d'expériences clients mémorables."
+        ],
+        "experience": [
+          "Élaboration et déploiement de la stratégie digitale annuelle de l'entreprise.",
+          "Augmentation du trafic organique de 60% en 6 mois grâce à une stratégie SEO sur-mesure.",
+          "Gestion de campagnes Google Ads et Meta Ads avec un ROAS moyen de 4x.",
+          "Rédaction et publication de contenu pour les réseaux sociaux, atteignant une communauté de X abonnés.",
+          "Organisation et coordination d'événements professionnels (salons, webinaires, conférences).",
+          "Analyse des données de performance et reporting mensuel des KPI marketing."
+        ],
+        "skills": ["SEO/SEM", "Google Ads", "Meta Ads", "Content Marketing", "CRM", "HubSpot", "Analytics", "Copywriting", "Stratégie digitale"]
+      }
+    },
+    {
+      "id": "finance",
+      "label": "Finance & Comptabilité",
+      "icon": "💰",
+      "suggestions": {
+        "summary": [
+          "Analyste financier rigoureux avec une expertise en modélisation financière, analyse de données et reporting.",
+          "Expert comptable avec une solide connaissance des normes IFRS et une forte capacité à conseiller les directions générales.",
+          "Professionnel de la finance d'entreprise, expert en optimisation fiscale et en gestion de trésorerie."
+        ],
+        "experience": [
+          "Réalisation d'analyses financières et de business plans pour soutenir les décisions d'investissement.",
+          "Production des tableaux de bord financiers mensuels à destination du CODIR.",
+          "Supervision de la clôture comptable mensuelle et du reporting groupe.",
+          "Optimisation de la gestion de trésorerie, dégageant un gain de X€ sur l'exercice.",
+          "Coordination et pilotage du processus budgétaire annuel.",
+          "Contrôle de la conformité fiscale et sociale de l'entreprise."
+        ],
+        "skills": ["Analyse financière", "Excel avancé", "SAP", "IFRS", "Comptabilité", "Contrôle de gestion", "Trésorerie", "Power BI", "Fiscalité"]
+      }
+    }
+  ]
+}
