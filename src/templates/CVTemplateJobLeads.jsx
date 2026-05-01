@@ -276,7 +276,7 @@ export default function CVTemplateJobLeads({ data }) {
   return (
     <>
       <style>{css}</style>
-      <div className="jl-cv">
+      <div className="jl-cv cv-document">
 
         {/* ── HEADER ── */}
         <div className="jl-header">

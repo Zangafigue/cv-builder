@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useCv } from '../context/CvContext';
 import { Download, Printer, ArrowLeft, LayoutTemplate, Palette, Check, ChevronDown, ChevronUp, Type, FileJson } from 'lucide-react';
 import Preview from '../components/Preview/Preview';
+import html2pdf from 'html2pdf.js';
 
 const COLORS = [
   { hex: '#1e293b', name: 'Ardoise' },
@@ -77,7 +78,6 @@ const FinalPage = () => {
   const handleExportPdf = async () => {
     setIsExporting(true);
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
       const element = previewRef.current?.querySelector('.cv-document');
       if (!element) { setIsExporting(false); return; }
       const opt = {
@@ -94,7 +94,10 @@ const FinalPage = () => {
         enableLinks: true
       };
       await html2pdf().set(opt).from(element).save();
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e);
+      alert("Erreur lors de l'export PDF: " + e.message);
+    }
     setIsExporting(false);
   };
 
