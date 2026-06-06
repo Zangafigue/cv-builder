@@ -1,8 +1,24 @@
 import { useRef, useState } from 'react';
 import { useCv } from '../context/CvContext';
-import { Download, Printer, ArrowLeft, LayoutTemplate, Palette, Check, ChevronDown, ChevronUp, Type, FileJson } from 'lucide-react';
+import {
+  Download, Printer, ArrowLeft, LayoutTemplate, Palette, Check,
+  ChevronDown, ChevronUp, Type, FileJson, FileText, Languages,
+  Loader, GripVertical, Plus, Sparkles
+} from 'lucide-react';
 import Preview from '../components/Preview/Preview';
-import html2pdf from 'html2pdf.js';
+import ScaledPreview from '../components/Preview/ScaledPreview';
+import { printCvDocument } from '../utils/printCv';
+import { translateCvData } from '../utils/geminiService';
+import { toast } from '../utils/toast';
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext, verticalListSortingStrategy, useSortable, sortableKeyboardCoordinates, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const COLORS = [
   { hex: '#1e293b', name: 'Ardoise' },
@@ -50,8 +66,22 @@ const LINE_HEIGHTS = [
   { id: 'relaxed', label: 'Aéré' },
 ];
 
-const Panel = ({ title, icon, children }) => {
-  const [open, setOpen] = useState(true);
+const SECTION_LABELS = {
+  experience: 'Expérience Professionnelle',
+  education: 'Formation',
+  skills: 'Compétences',
+  languages: 'Langues',
+  projects: 'Projets',
+  extracurricular: 'Activités Extrascolaires',
+  certifications: 'Certifications',
+  interests: 'Loisirs',
+  customSections: 'Sections Perso.',
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const Panel = ({ title, icon, children, defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{ borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)', overflow: 'hidden', backgroundColor: 'white' }}>
       <button
@@ -70,50 +100,158 @@ const Panel = ({ title, icon, children }) => {
   );
 };
 
+// Drag & Drop sortable section row
+const SortableSectionRow = ({ id }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+    opacity: isDragging ? 0.85 : 1,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        ...style,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '0.5rem 0.75rem',
+        marginBottom: '0.375rem',
+        backgroundColor: isDragging ? 'var(--primary-50)' : 'var(--surface-50)',
+        border: '1px solid var(--border-color)',
+        borderRadius: 'var(--radius-md)',
+        fontSize: '0.8rem',
+        color: 'var(--surface-700)',
+        cursor: 'grab',
+      }}
+    >
+      <div {...attributes} {...listeners} style={{ touchAction: 'none', color: 'var(--text-muted)', display: 'flex' }}>
+        <GripVertical size={14} />
+      </div>
+      <span style={{ flex: 1 }}>{SECTION_LABELS[id] || id}</span>
+    </div>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 const FinalPage = () => {
-  const { cvData, navigate, updateTemplateSettings } = useCv();
+  const { cvData, navigate, updateTemplateSettings, setCvData } = useCv();
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedData, setTranslatedData] = useState(null); // non-null = preview in translated mode
   const previewRef = useRef(null);
 
-  const handleExportPdf = async () => {
-    setIsExporting(true);
-    try {
-      const element = previewRef.current?.querySelector('.cv-document');
-      if (!element) { setIsExporting(false); return; }
-      const opt = {
-        margin: 0,
-        filename: `CV_${cvData.personalInfo.fullName || 'Mon_CV'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true,
-          letterRendering: true,
-          logging: false
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        enableLinks: true
-      };
-      await html2pdf().set(opt).from(element).save();
-    } catch (e) { 
-      console.error(e);
-      alert("Erreur lors de l'export PDF: " + e.message);
+  // Drag & drop sensors for section reordering
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const sectionsOrder = cvData.sectionsOrder || [
+    'experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections',
+  ];
+
+  const handleSectionDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = sectionsOrder.indexOf(active.id);
+      const newIndex = sectionsOrder.indexOf(over.id);
+      updateTemplateSettings('sectionsOrder', arrayMove(sectionsOrder, oldIndex, newIndex));
     }
-    setIsExporting(false);
   };
 
-  const handlePrint = () => window.print();
+  // ── Exports ─────────────────────────────────────────────────────────────────
+
+  const printCv = () => {
+    const element = previewRef.current?.querySelector('.cv-document');
+    if (!element) {
+      toast.error('Aperçu introuvable. Réessayez après le chargement du CV.');
+      return;
+    }
+    printCvDocument(element, {
+      filename: `CV_${cvData.personalInfo.fullName || 'Mon_CV'}`,
+      container: previewRef.current,
+    });
+  };
+
+  // "Télécharger PDF" → native print dialog → "Enregistrer en PDF" yields a real,
+  // text-based (ATS-readable) PDF, unlike the previous html2canvas raster export.
+  const handleExportPdf = () => {
+    setIsExporting(true);
+    try {
+      printCv();
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportDocx = async () => {
+    setIsExportingDocx(true);
+    try {
+      // Lazy-loaded so the docx library stays out of the main bundle.
+      const { exportToDocx } = await import('../utils/exportDocx');
+      await exportToDocx(translatedData || cvData);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de l'export Word : " + e.message);
+    }
+    setIsExportingDocx(false);
+  };
+
+  const handlePrint = () => printCv();
 
   const handleExportJson = () => {
     const dataStr = JSON.stringify(cvData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `cv_data_${cvData.personalInfo.fullName ? cvData.personalInfo.fullName.replace(/\s+/g, '_') : 'export'}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const filename = `cv_data_${(cvData.personalInfo.fullName || 'export').replace(/\s+/g, '_')}.json`;
+    const link = document.createElement('a');
+    link.setAttribute('href', dataUri);
+    link.setAttribute('download', filename);
+    link.click();
   };
+
+  // ── Translation ─────────────────────────────────────────────────────────────
+
+  const handleTranslate = async (targetLang) => {
+    setIsTranslating(true);
+    try {
+      const translated = await translateCvData(cvData, targetLang);
+      setTranslatedData(translated);
+    } catch (e) {
+      console.error(e);
+      toast.error('Erreur de traduction : ' + e.message);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleApplyTranslation = () => {
+    if (translatedData) {
+      setCvData({
+        ...translatedData,
+        template: cvData.template,
+        themeColor: cvData.themeColor,
+        typography: cvData.typography,
+        sectionsOrder: cvData.sectionsOrder,
+      });
+      setTranslatedData(null);
+    }
+  };
+
+  // The data shown in the preview and used for exports
+  const previewData = translatedData 
+    ? {
+        ...translatedData,
+        template: cvData.template,
+        themeColor: cvData.themeColor,
+        typography: cvData.typography,
+        sectionsOrder: cvData.sectionsOrder,
+      }
+    : cvData;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface-50)' }}>
@@ -138,7 +276,7 @@ const FinalPage = () => {
             Finalisez votre CV
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: '0.625rem' }}>
+        <div className="final-header-buttons" style={{ display: 'flex', gap: '0.625rem' }}>
           <button onClick={handlePrint} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Printer size={16} /> Imprimer
           </button>
@@ -149,7 +287,7 @@ const FinalPage = () => {
       </header>
 
       {/* Body */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', maxWidth: '1300px', margin: '0 auto', padding: '2rem', gap: '2rem' }}>
+      <div className="final-layout-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', maxWidth: '1300px', margin: '0 auto', padding: '2rem', gap: '2rem' }}>
         {/* CV Preview Center */}
         <div
           ref={previewRef}
@@ -163,16 +301,22 @@ const FinalPage = () => {
             backgroundSize: '20px 20px',
           }}
         >
-          <Preview />
+          <ScaledPreview>
+            <Preview overrideData={previewData} />
+          </ScaledPreview>
         </div>
 
         {/* Right Side Options */}
-        <aside style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Download quick actions */}
+        <aside className="final-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+          {/* Export quick actions */}
           <div style={{ backgroundColor: 'white', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             <p style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--surface-700)', marginBottom: '0.25rem' }}>Exporter le CV</p>
             <button onClick={handleExportPdf} className="btn btn-primary" disabled={isExporting} style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}>
               <Download size={16} /> {isExporting ? 'Génération...' : 'Télécharger (PDF)'}
+            </button>
+            <button onClick={handleExportDocx} className="btn btn-secondary" disabled={isExportingDocx} style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}>
+              <FileText size={16} /> {isExportingDocx ? 'Génération...' : 'Télécharger (Word .docx)'}
             </button>
             <button onClick={handleExportJson} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', gap: '0.5rem', backgroundColor: 'var(--surface-100)', color: 'var(--surface-700)', borderColor: 'var(--surface-300)' }}>
               <FileJson size={16} /> Exporter Données (JSON)
@@ -180,7 +324,88 @@ const FinalPage = () => {
             <button onClick={handlePrint} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}>
               <Printer size={16} /> Imprimer
             </button>
+            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1.4, marginTop: '0.25rem' }}>
+              Le PDF s'ouvre via la boîte d'impression : choisissez « Enregistrer en PDF » comme destination. Le texte reste sélectionnable et lisible par les ATS.
+            </p>
           </div>
+
+          {/* Translation via Gemini */}
+          <Panel title="Traduction IA (Gemini)" icon={<Languages size={16} />} defaultOpen={false}>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '0.25rem' }}>
+                Traduisez automatiquement votre CV en anglais ou en français grâce à Gemini.
+              </p>
+
+              {translatedData && (
+                <div style={{
+                  backgroundColor: 'var(--primary-50)',
+                  border: '1px solid var(--primary-200)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.75rem',
+                  fontSize: '0.8rem',
+                  color: 'var(--primary-700)',
+                  marginBottom: '0.25rem',
+                }}>
+                  <strong>Aperçu traduit actif.</strong> Cliquez sur "Appliquer" pour sauvegarder définitivement, ou "Annuler" pour revenir à l'original.
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    <button className="btn btn-primary" onClick={handleApplyTranslation} style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '0.375rem 0.5rem', gap: '0.25rem' }}>
+                      <Check size={13} /> Appliquer
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => setTranslatedData(null)} style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem', padding: '0.375rem 0.5rem' }}>
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => handleTranslate('EN')}
+                  disabled={isTranslating}
+                  style={{ justifyContent: 'center', gap: '0.375rem', fontSize: '0.8rem' }}
+                >
+                  {isTranslating
+                    ? <Loader size={14} className="animate-spin" />
+                    : <Languages size={14} />}
+                  🇬🇧 EN
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => handleTranslate('FR')}
+                  disabled={isTranslating}
+                  style={{ justifyContent: 'center', gap: '0.375rem', fontSize: '0.8rem' }}
+                >
+                  {isTranslating
+                    ? <Loader size={14} className="animate-spin" />
+                    : <Languages size={14} />}
+                  🇫🇷 FR
+                </button>
+              </div>
+            </div>
+          </Panel>
+
+          {/* Section reordering D&D */}
+          <Panel title="Ordre des sections" icon={<GripVertical size={16} />} defaultOpen={false}>
+            <div style={{ marginTop: '1rem' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                Glissez-déposez pour réorganiser les sections dans le CV.
+              </p>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+                <SortableContext items={sectionsOrder} strategy={verticalListSortingStrategy}>
+                  {sectionsOrder.map(id => (
+                    <SortableSectionRow key={id} id={id} />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              {sectionsOrder.length === 0 && (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                  <Sparkles size={20} style={{ marginBottom: '0.5rem', opacity: 0.4 }} /><br />
+                  Aucune section active. Ajoutez-en via l'étape Structure du wizard.
+                </div>
+              )}
+            </div>
+          </Panel>
 
           {/* Models & Colors */}
           <Panel title="Modèles & Couleurs" icon={<Palette size={16} />}>
@@ -229,9 +454,9 @@ const FinalPage = () => {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', backgroundColor: 'var(--surface-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <input 
-                  type="color" 
-                  value={cvData.themeColor} 
+                <input
+                  type="color"
+                  value={cvData.themeColor}
                   onChange={e => updateTemplateSettings('themeColor', e.target.value)}
                   style={{ width: '32px', height: '32px', padding: 0, border: 'none', backgroundColor: 'transparent', cursor: 'pointer' }}
                 />
@@ -240,8 +465,8 @@ const FinalPage = () => {
             </div>
           </Panel>
 
-          {/* Typography options */}
-          <Panel title="Typographie" icon={<Type size={16} />}>
+          {/* Typography */}
+          <Panel title="Typographie" icon={<Type size={16} />} defaultOpen={false}>
             <div style={{ marginTop: '1rem' }}>
               <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Police Globale</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
@@ -268,8 +493,8 @@ const FinalPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Taille</p>
-                  <select 
-                    value={cvData.typography?.fontSize || 'medium'} 
+                  <select
+                    value={cvData.typography?.fontSize || 'medium'}
                     onChange={e => updateTemplateSettings('typography', { ...cvData.typography, fontSize: e.target.value })}
                     style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-300)', backgroundColor: 'var(--surface-50)', color: 'var(--text-main)', fontSize: '0.875rem' }}
                   >
@@ -278,8 +503,8 @@ const FinalPage = () => {
                 </div>
                 <div>
                   <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Interligne</p>
-                  <select 
-                    value={cvData.typography?.lineHeight || 'normal'} 
+                  <select
+                    value={cvData.typography?.lineHeight || 'normal'}
                     onChange={e => updateTemplateSettings('typography', { ...cvData.typography, lineHeight: e.target.value })}
                     style={{ width: '100%', padding: '0.625rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-300)', backgroundColor: 'var(--surface-50)', color: 'var(--text-main)', fontSize: '0.875rem' }}
                   >
@@ -300,6 +525,23 @@ const FinalPage = () => {
           </button>
         </aside>
       </div>
+
+      {/* Translation loading overlay */}
+      {isTranslating && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 999, gap: '1rem',
+        }}>
+          <Loader size={32} color="#60a5fa" className="animate-spin" />
+          <p style={{ color: 'white', fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 700 }}>
+            Traduction en cours…
+          </p>
+          <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Gemini traduit votre CV, veuillez patienter.</p>
+        </div>
+      )}
     </div>
   );
 };

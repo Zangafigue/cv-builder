@@ -1,3 +1,4 @@
+import { getTranslation } from './shared/translations';
 import React from 'react';
 
 const ACCENT = '#0F4C75'; // Bleu tech sobre
@@ -142,14 +143,15 @@ const Section = ({ title, children }) => (
 );
 
 // Groupe les skills par catégorie/niveau pour une section "Stack technique"
-const StackSection = ({ skills }) => {
+const StackSection = ({ skills, language = 'FR' }) => {
   if (!skills?.length) return null;
+  const t = (key) => getTranslation(key, language);
   const hasLevels = skills.some(sk => typeof sk === 'object' && sk.showLevel && sk.level);
 
   if (!hasLevels) {
     const names = skills.map(sk => typeof sk === 'string' ? sk : sk.name).filter(Boolean);
     return (
-      <Section title="Compétences Techniques">
+      <Section title={t('skills')}>
         <div style={s.stackWrap}>{names.join(' · ')}</div>
       </Section>
     );
@@ -164,7 +166,7 @@ const StackSection = ({ skills }) => {
   });
 
   return (
-    <Section title="Compétences Techniques">
+    <Section title={t('skills')}>
       <div style={s.stackWrap}>
         {Object.entries(groups).map(([level, names]) => (
           <div key={level} style={s.stackGroup}>
@@ -198,6 +200,8 @@ const Entry = ({ title, sub, date, location, desc, tech }) => (
 );
 
 export default function CVTemplateATS3({ data }) {
+  const language = data?.language || 'FR';
+  const t = (key) => getTranslation(key, language);
   const d = data || {};
   const contactParts = [
     d.phone, d.email, d.address,
@@ -218,81 +222,101 @@ export default function CVTemplateATS3({ data }) {
 
       {/* PROFIL */}
       {d.summary && (
-        <Section title="Profil">
+        <Section title={t('profile')}>
           <p style={s.summary}>{d.summary}</p>
         </Section>
       )}
 
-      {/* EXPÉRIENCE */}
-      {d.experience?.length > 0 && (
-        <Section title="Expérience Professionnelle">
-          {d.experience.map((exp, i) => (
-            <Entry
-              key={i}
-              title={exp.title}
-              sub={exp.company}
-              date={exp.period}
-              location={exp.location}
-              desc={exp.description}
-            />
-          ))}
-        </Section>
-      )}
-
-      {/* FORMATION */}
-      {d.education?.length > 0 && (
-        <Section title="Formation">
-          {d.education.map((edu, i) => (
-            <Entry
-              key={i}
-              title={edu.degree}
-              sub={edu.school}
-              date={edu.period}
-              location={edu.location}
-              desc={edu.description}
-            />
-          ))}
-        </Section>
-      )}
-
-      {/* STACK TECHNIQUE (section dédiée pour les mots-clés ATS) */}
-      <StackSection skills={d.skills} />
-
-      {/* CERTIFICATIONS */}
-      {d.certifications?.length > 0 && (
-        <Section title="Certifications">
-          {d.certifications.map((c, i) => (
-            <div key={i} style={s.certifItem}>
-              <strong>{c.name}</strong>{c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}
-            </div>
-          ))}
-        </Section>
-      )}
-
-      {/* LANGUES */}
-      {d.languages?.length > 0 && (
-        <Section title="Langues">
-          <div style={s.langRow}>
-            {d.languages.map((l, i) => {
-              const name = typeof l === 'string' ? l : l.name;
-              const level = typeof l === 'object' && l.level ? ` — ${l.level}` : '';
-              return <span key={i}><strong>{name}</strong>{level}</span>;
-            })}
-          </div>
-        </Section>
-      )}
-
-      {/* INTÉRÊTS */}
-      {d.interests?.length > 0 && (
-        <Section title="Centres d'intérêt">
-          <div style={{ fontSize: '10.5pt', color: '#333' }}>
-            {d.interests.map((t, i) => {
-              const label = typeof t === 'string' ? t : (t.name || t);
-              return <span key={i}>{label}{i < d.interests.length - 1 ? ' · ' : ''}</span>;
-            })}
-          </div>
-        </Section>
-      )}
+      {/* Sections in the user-defined order (sectionsOrder) */}
+      {(d.sectionsOrder || ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections']).map((sid) => {
+        switch (sid) {
+          case 'experience':
+            return d.experience?.length > 0 ? (
+              <Section key={sid} title={t('experience')}>
+                {d.experience.map((exp, i) => (
+                  <Entry key={i} title={exp.title} sub={exp.company} date={exp.period} location={exp.location} desc={exp.description} />
+                ))}
+              </Section>
+            ) : null;
+          case 'education':
+            return d.education?.length > 0 ? (
+              <Section key={sid} title={t('education')}>
+                {d.education.map((edu, i) => (
+                  <Entry key={i} title={edu.degree} sub={edu.school} date={edu.period} location={edu.location} desc={edu.description} />
+                ))}
+              </Section>
+            ) : null;
+          case 'projects':
+            return d.projects?.length > 0 ? (
+              <Section key={sid} title={t('projects')}>
+                {d.projects.map((proj, i) => (
+                  <Entry key={i} title={proj.title} sub={proj.type} desc={Array.isArray(proj.bullets) ? proj.bullets.join('\n') : proj.description} />
+                ))}
+              </Section>
+            ) : null;
+          case 'skills':
+            // Dedicated "tech stack" section for ATS keyword matching.
+            return <StackSection key={sid} skills={d.skills} language={language} />;
+          case 'certifications':
+            return d.certifications?.length > 0 ? (
+              <Section key={sid} title={t('certifications')}>
+                {d.certifications.map((c, i) => (
+                  <div key={i} style={s.certifItem}>
+                    <strong>{c.name}</strong>{c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}
+                  </div>
+                ))}
+              </Section>
+            ) : null;
+          case 'languages':
+            return d.languages?.length > 0 ? (
+              <Section key={sid} title={t('languages')}>
+                <div style={s.langRow}>
+                  {d.languages.map((l, i) => {
+                    const name = typeof l === 'string' ? l : l.name;
+                    const level = typeof l === 'object' && l.level ? ` — ${l.level}` : '';
+                    return <span key={i}><strong>{name}</strong>{level}</span>;
+                  })}
+                </div>
+              </Section>
+            ) : null;
+          case 'interests':
+            return d.interests?.length > 0 ? (
+              <Section key={sid} title={t('interests')}>
+                <div style={{ fontSize: '10.5pt', color: '#333' }}>
+                  {d.interests.map((it, i) => {
+                    const label = typeof it === 'string' ? it : (it.name || it);
+                    return <span key={i}>{label}{i < d.interests.length - 1 ? ' · ' : ''}</span>;
+                  })}
+                </div>
+              </Section>
+            ) : null;
+          case 'extracurricular':
+            return d.extracurricular?.length > 0 ? (
+              <Section key={sid} title={t('extracurricular')}>
+                <div style={{ fontSize: '10.5pt', color: '#333' }}>
+                  {d.extracurricular.map((item, i) => {
+                    const text = typeof item === 'string' ? item : (item.name || item.description || '');
+                    return text ? <div key={i} style={{ marginBottom: '3px' }}>{text}</div> : null;
+                  })}
+                </div>
+              </Section>
+            ) : null;
+          case 'customSections':
+            return d.customSections?.length > 0 ? (
+              <React.Fragment key={sid}>
+                {d.customSections.map((cs, i) => cs.name ? (
+                  <Section key={i} title={cs.name}>
+                    <div style={{ fontSize: '10.5pt', color: '#333', lineHeight: 1.5 }}>
+                      {(cs.content || '').split('\n').map((line, j) => (<div key={j}>{line}</div>))}
+                    </div>
+                  </Section>
+                ) : null)}
+              </React.Fragment>
+            ) : null;
+          default:
+            return null;
+        }
+      })}
     </div>
   );
 }

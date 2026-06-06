@@ -45,7 +45,7 @@ const Certifications = () => {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label className="form-label" style={{ fontSize: '0.8rem' }}>Organisme</label>
                   <div style={{ position: 'relative' }}>

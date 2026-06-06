@@ -1,8 +1,9 @@
+import { getTranslation } from './shared/translations';
 // CVTemplateJobLeads.jsx
 // Reproduction fidèle du template JobLeads vu dans les screenshots :
 // - Photo ronde à gauche du nom
 // - En-tête : nom + infos de contact inline
-// - Sections : RÉSUMÉ, EXPÉRIENCE PROFESSIONNELLE, FORMATION, CONNAISSANCES, LANGUES
+// - Sections : {t('profile').toUpperCase()}, {t('experience').toUpperCase()}, {t('education').toUpperCase()}, {t('skills').toUpperCase()}, {t('languages').toUpperCase()}
 // - Layout 2 colonnes pour date | contenu
 // - Séparateurs horizontaux entre sections
 // - Typographie sobre, noire sur blanc
@@ -92,7 +93,7 @@ const css = `
   }
   .jl-section-body { flex: 1; }
 
-  /* ── RÉSUMÉ ─────────────────────────────────── */
+  /* ── {t('profile').toUpperCase()} ─────────────────────────────────── */
   .jl-summary {
     font-size: 9.5pt;
     color: #333;
@@ -149,7 +150,7 @@ const css = `
     margin-top: 2px;
   }
 
-  /* ── CONNAISSANCES (skills grid) ────────────── */
+  /* ── {t('skills').toUpperCase()} (skills grid) ────────────── */
   .jl-skills-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -163,7 +164,7 @@ const css = `
     gap: 6px;
   }
 
-  /* ── LANGUES ────────────────────────────────── */
+  /* ── {t('languages').toUpperCase()} ────────────────────────────────── */
   .jl-langs {
     display: flex;
     flex-direction: column;
@@ -192,7 +193,7 @@ const css = `
     max-width: 120px;
   }
 
-  /* ── CERTIFICATIONS ─────────────────────────── */
+  /* ── {t('certifications').toUpperCase()} ─────────────────────────── */
   .jl-certif-item {
     font-size: 9.5pt;
     color: #333;
@@ -209,7 +210,7 @@ const css = `
   .jl-certif-name { font-weight: 600; color: #111; }
   .jl-certif-meta { color: #666; font-size: 9pt; }
 
-  /* ── INTÉRÊTS ───────────────────────────────── */
+  /* ── {t('interests').toUpperCase()} ───────────────────────────────── */
   .jl-interests {
     font-size: 9.5pt;
     color: #333;
@@ -264,6 +265,8 @@ function Entry({ date, title, company, location, bullets = [], desc }) {
 // ── Composant principal ────────────────────────────────────────────────────
 
 export default function CVTemplateJobLeads({ data }) {
+  const language = data?.language || 'FR';
+  const t = (key) => getTranslation(key, language);
   const d = data || defaultData;
 
   const contactParts = [
@@ -302,106 +305,126 @@ export default function CVTemplateJobLeads({ data }) {
           </div>
         </div>
 
-        {/* ── RÉSUMÉ ── */}
+        {/* ── {t('profile').toUpperCase()} ── */}
         {d.summary && (
-          <Section label="RÉSUMÉ">
+          <Section label={t('profile').toUpperCase()}>
             <p className="jl-summary">{d.summary}</p>
           </Section>
         )}
 
-        {/* ── EXPÉRIENCE PROFESSIONNELLE ── */}
-        {d.experience?.length > 0 && (
-          <Section label="EXPÉRIENCE PROFESSIONNELLE">
-            {d.experience.map((exp, i) => (
-              <Entry
-                key={i}
-                date={exp.period}
-                title={exp.title}
-                company={exp.company}
-                location={exp.location}
-                bullets={exp.bullets || (exp.description ? exp.description.split('\n').filter(Boolean) : [])}
-              />
-            ))}
-          </Section>
-        )}
-
-        {/* ── FORMATION ── */}
-        {d.education?.length > 0 && (
-          <Section label="FORMATION">
-            {d.education.map((edu, i) => (
-              <Entry
-                key={i}
-                date={edu.period}
-                title={edu.degree}
-                company={edu.school}
-                location={edu.location}
-                bullets={edu.bullets || (edu.description ? edu.description.split('\n').filter(Boolean) : [])}
-              />
-            ))}
-          </Section>
-        )}
-
-        {/* ── CERTIFICATIONS ── */}
-        {d.certifications?.length > 0 && (
-          <Section label="CERTIFICATIONS">
-            {d.certifications.map((c, i) => (
-              <div key={i} className="jl-certif-item">
-                <span className="jl-certif-name">{c.name}</span>
-                <span className="jl-certif-meta">
-                  {c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}
-                </span>
-              </div>
-            ))}
-          </Section>
-        )}
-
-        {/* ── CONNAISSANCES ── */}
-        {d.skills?.length > 0 && (
-          <Section label="CONNAISSANCES">
-            <div className="jl-skills-grid">
-              {d.skills.map((sk, i) => {
-                const name = typeof sk === 'string' ? sk : sk.name;
-                const level = typeof sk === 'object' && sk.showLevel && sk.level ? sk.level : null;
-                return (
-                  <div key={i} className="jl-skill-item">
-                    {name}{level ? <span style={{ color: '#777', fontSize: '8.5pt' }}> ({level})</span> : ''}
+        {/* ── Sections in the user-defined order (sectionsOrder) ── */}
+        {(d.sectionsOrder || ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections']).map((sid) => {
+          switch (sid) {
+            case 'experience':
+              return d.experience?.length > 0 ? (
+                <Section key={sid} label={t('experience').toUpperCase()}>
+                  {d.experience.map((exp, i) => (
+                    <Entry key={i} date={exp.period} title={exp.title} company={exp.company} location={exp.location}
+                      bullets={exp.bullets || (exp.description ? exp.description.split('\n').filter(Boolean) : [])} />
+                  ))}
+                </Section>
+              ) : null;
+            case 'education':
+              return d.education?.length > 0 ? (
+                <Section key={sid} label={t('education').toUpperCase()}>
+                  {d.education.map((edu, i) => (
+                    <Entry key={i} date={edu.period} title={edu.degree} company={edu.school} location={edu.location}
+                      bullets={edu.bullets || (edu.description ? edu.description.split('\n').filter(Boolean) : [])} />
+                  ))}
+                </Section>
+              ) : null;
+            case 'projects':
+              return d.projects?.length > 0 ? (
+                <Section key={sid} label={t('projects').toUpperCase()}>
+                  {d.projects.map((proj, i) => (
+                    <Entry key={i} title={proj.title} company={proj.type}
+                      bullets={Array.isArray(proj.bullets) ? proj.bullets : (proj.description ? proj.description.split('\n').filter(Boolean) : [])} />
+                  ))}
+                </Section>
+              ) : null;
+            case 'certifications':
+              return d.certifications?.length > 0 ? (
+                <Section key={sid} label={t('certifications').toUpperCase()}>
+                  {d.certifications.map((c, i) => (
+                    <div key={i} className="jl-certif-item">
+                      <span className="jl-certif-name">{c.name}</span>
+                      <span className="jl-certif-meta">{c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}</span>
+                    </div>
+                  ))}
+                </Section>
+              ) : null;
+            case 'skills':
+              return d.skills?.length > 0 ? (
+                <Section key={sid} label={t('skills').toUpperCase()}>
+                  <div className="jl-skills-grid">
+                    {d.skills.map((sk, i) => {
+                      const name = typeof sk === 'string' ? sk : sk.name;
+                      const level = typeof sk === 'object' && sk.showLevel && sk.level ? sk.level : null;
+                      return (
+                        <div key={i} className="jl-skill-item">
+                          {name}{level ? <span style={{ color: '#777', fontSize: '8.5pt' }}> ({level})</span> : ''}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </Section>
-        )}
-
-        {/* ── LANGUES ── */}
-        {d.languages?.length > 0 && (
-          <Section label="LANGUES">
-            <div className="jl-langs">
-              {d.languages.map((l, i) => {
-                const name = typeof l === 'string' ? l : l.name;
-                const level = typeof l === 'object' && l.level ? l.level : '';
-                return (
-                  <div key={i} className="jl-lang-row">
-                    <span className="jl-lang-name">{name}</span>
-                    <div className="jl-lang-bar" />
-                    {level && <span className="jl-lang-level">({level})</span>}
+                </Section>
+              ) : null;
+            case 'languages':
+              return d.languages?.length > 0 ? (
+                <Section key={sid} label={t('languages').toUpperCase()}>
+                  <div className="jl-langs">
+                    {d.languages.map((l, i) => {
+                      const name = typeof l === 'string' ? l : l.name;
+                      const level = typeof l === 'object' && l.level ? l.level : '';
+                      return (
+                        <div key={i} className="jl-lang-row">
+                          <span className="jl-lang-name">{name}</span>
+                          <div className="jl-lang-bar" />
+                          {level && <span className="jl-lang-level">({level})</span>}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </Section>
-        )}
-
-        {/* ── CENTRES D'INTÉRÊT ── */}
-        {d.interests?.length > 0 && (
-          <Section label="INTÉRÊTS">
-            <div className="jl-interests">
-              {d.interests.map((t, i) => {
-                const label = typeof t === 'string' ? t : (t.name || t);
-                return <span key={i}>{label}{i < d.interests.length - 1 ? '  ·  ' : ''}</span>;
-              })}
-            </div>
-          </Section>
-        )}
+                </Section>
+              ) : null;
+            case 'interests':
+              return d.interests?.length > 0 ? (
+                <Section key={sid} label={t('interests').toUpperCase()}>
+                  <div className="jl-interests">
+                    {d.interests.map((it, i) => {
+                      const label = typeof it === 'string' ? it : (it.name || it);
+                      return <span key={i}>{label}{i < d.interests.length - 1 ? '  ·  ' : ''}</span>;
+                    })}
+                  </div>
+                </Section>
+              ) : null;
+            case 'extracurricular':
+              return d.extracurricular?.length > 0 ? (
+                <Section key={sid} label={t('extracurricular').toUpperCase()}>
+                  <ul className="jl-entry-bullets">
+                    {d.extracurricular.map((item, i) => {
+                      const text = typeof item === 'string' ? item : (item.name || item.description || '');
+                      return text ? <li key={i}>{text}</li> : null;
+                    })}
+                  </ul>
+                </Section>
+              ) : null;
+            case 'customSections':
+              return d.customSections?.length > 0 ? (
+                <React.Fragment key={sid}>
+                  {d.customSections.map((cs, i) => cs.name ? (
+                    <Section key={i} label={cs.name.toUpperCase()}>
+                      <div className="jl-summary">
+                        {(cs.content || '').split('\n').map((line, j) => (<div key={j}>{line}</div>))}
+                      </div>
+                    </Section>
+                  ) : null)}
+                </React.Fragment>
+              ) : null;
+            default:
+              return null;
+          }
+        })}
 
       </div>
     </>

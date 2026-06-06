@@ -164,3 +164,20 @@ input, textarea, select {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--surface-400);
 }
+
+.hover-danger {
+  transition: color var(--transition-fast);
+}
+
+.hover-danger:hover {
+  color: var(--danger) !important;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

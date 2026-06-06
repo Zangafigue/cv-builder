@@ -1,4 +1,5 @@
 import { useCv } from '../../context/CvContext';
+import { getTranslation } from '../../templates/shared/translations';
 import {
   DndContext,
   closestCenter,
@@ -22,11 +23,14 @@ const SECTION_LABELS = {
   education: 'Formation',
   skills: 'Compétences Clés',
   languages: 'Langues Parlées',
-  interests: 'Centres d\'intérêt',
+  projects: 'Projets Réalisés',
+  extracurricular: 'Activités Extrascolaires & Bénévolat',
   certifications: 'Certifications',
+  interests: 'Loisirs & Intérêts',
+  customSections: 'Rubriques Personnalisées',
 };
 
-const SortableItem = ({ id, onRemove }) => {
+const SortableItem = ({ id, label, onRemove }) => {
   const {
     attributes,
     listeners,
@@ -67,7 +71,7 @@ const SortableItem = ({ id, onRemove }) => {
         <GripVertical size={18} />
       </div>
       <span style={{ fontWeight: 600, color: 'var(--surface-800)', flex: 1 }}>
-        {SECTION_LABELS[id]}
+        {label}
       </span>
       <button 
         onClick={() => onRemove(id)}
@@ -86,7 +90,10 @@ const SortableItem = ({ id, onRemove }) => {
 
 const StepStructure = () => {
   const { cvData, updateTemplateSettings } = useCv();
-  const { sectionsOrder = ['experience', 'education', 'skills', 'languages'] } = cvData;
+  const { sectionsOrder = ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections'] } = cvData;
+  const lang = cvData.language || 'FR';
+  // Same labels the templates render, so the structure matches the preview.
+  const labelFor = (id) => id === 'customSections' ? (lang === 'EN' ? 'Custom sections' : 'Rubriques personnalisées') : getTranslation(id, lang);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -139,7 +146,7 @@ const StepStructure = () => {
                   className="btn btn-secondary"
                   style={{ fontSize: '0.75rem', padding: '0.4rem 0.75rem', gap: '0.375rem' }}
                 >
-                  <Plus size={14} /> {SECTION_LABELS[id].split(' ')[0]}
+                  <Plus size={14} /> {labelFor(id).split(' ')[0]}
                 </button>
               ))}
             </div>
@@ -157,7 +164,7 @@ const StepStructure = () => {
           strategy={verticalListSortingStrategy}
         >
           {sectionsOrder.map(id => (
-            <SortableItem key={id} id={id} onRemove={removeSection} />
+            <SortableItem key={id} id={id} label={labelFor(id)} onRemove={removeSection} />
           ))}
         </SortableContext>
       </DndContext>

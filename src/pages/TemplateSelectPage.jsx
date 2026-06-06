@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { useCv } from '../context/CvContext';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import ModernTemplate from '../components/Preview/ModernTemplate';
-import ClassicTemplate from '../components/Preview/ClassicTemplate';
-import MinimalistTemplate from '../components/Preview/MinimalistTemplate';
-import ExecutiveTemplate from '../components/Preview/ExecutiveTemplate';
-import CreativeTemplate from '../components/Preview/CreativeTemplate';
-import TechnicalTemplate from '../components/Preview/TechnicalTemplate';
-import ElegantTemplate from '../components/Preview/ElegantTemplate';
-import ModernAltTemplate from '../components/Preview/ModernAltTemplate';
-import TimelineTemplate from '../components/Preview/TimelineTemplate';
-
-// ATS-Optimized Templates
-import { CVTemplateATS1, CVTemplateATS2, CVTemplateATS3, CVTemplateJobLeads } from '../templates';
+import { 
+  CVTemplateModern, 
+  CVTemplateClassic, 
+  CVTemplateMinimalist, 
+  CVTemplateExecutive, 
+  CVTemplateCreative, 
+  CVTemplateTechnical, 
+  CVTemplateElegant, 
+  CVTemplateModernAlt, 
+  CVTemplateTimeline,
+  CVTemplateATS1, 
+  CVTemplateATS2, 
+  CVTemplateATS3,
+  CVTemplateJobLeads,
+} from '../templates';
 import { getMockData } from '../utils/templateMapper';
+import ScaledPreview from '../components/Preview/ScaledPreview';
 
 const COLORS = [
   { hex: '#3b82f6', name: 'Bleu' },
@@ -32,7 +36,7 @@ const templates = [
   { id: 'classic', name: 'Classique', desc: 'Sidebar sombre avec barres de compétences et timeline.', badge: 'Professionnel', badgeColor: '#1e293b' },
   { id: 'minimalist', name: 'Minimaliste', desc: 'Épuré, typographie classique, parfait pour les profils seniors.' },
   { id: 'executive', name: 'Dirigeant', desc: 'En-tête marqué, structure solide en deux colonnes denses.' },
-  { id: 'creative', name: 'Créatif', desc: 'Bandeau coloré asymétrique, idéal pour le design et marketing.', badge: 'Atractif', badgeColor: '#ec4899' },
+  { id: 'creative', name: 'Créatif', desc: 'Bandeau coloré asymétrique, idéal pour le design et marketing.', badge: 'Attractif', badgeColor: '#ec4899' },
   { id: 'technical', name: 'Technique', desc: 'Design style Terminal, inspiré du code pour les développeurs.', badge: 'IT / Dev', badgeColor: '#10b981' },
   { id: 'elegant', name: 'Élégant', desc: 'Polices avec empattement, mise en page très aérée et douce.' },
   { id: 'modern-alt', name: 'Impactant', desc: 'Variante moderne avec titre pleine largeur et sidebar à droite.' },
@@ -58,23 +62,23 @@ const TemplateThumbnail = ({ templateId, selected }) => {
         background: '#f1f5f9',
       }}
     >
-      <div style={{ transform: 'scale(0.38)', transformOrigin: 'top left', width: '263%', height: '263%' }}>
-        {templateId === 'modern' && <ModernTemplate />}
-        {templateId === 'classic' && <ClassicTemplate />}
-        {templateId === 'minimalist' && <MinimalistTemplate />}
-        {templateId === 'executive' && <ExecutiveTemplate />}
-        {templateId === 'creative' && <CreativeTemplate />}
-        {templateId === 'technical' && <TechnicalTemplate />}
-        {templateId === 'elegant' && <ElegantTemplate />}
-        {templateId === 'modern-alt' && <ModernAltTemplate />}
-        {templateId === 'timeline' && <TimelineTemplate />}
+      <ScaledPreview clipHeight={300}>
+        {templateId === 'modern' && <CVTemplateModern data={getMockData('modern')} />}
+        {templateId === 'classic' && <CVTemplateClassic data={getMockData('classic')} />}
+        {templateId === 'minimalist' && <CVTemplateMinimalist data={getMockData('minimalist')} />}
+        {templateId === 'executive' && <CVTemplateExecutive data={getMockData('executive')} />}
+        {templateId === 'creative' && <CVTemplateCreative data={getMockData('creative')} />}
+        {templateId === 'technical' && <CVTemplateTechnical data={getMockData('technical')} />}
+        {templateId === 'elegant' && <CVTemplateElegant data={getMockData('elegant')} />}
+        {templateId === 'modern-alt' && <CVTemplateModernAlt data={getMockData('modern-alt')} />}
+        {templateId === 'timeline' && <CVTemplateTimeline data={getMockData('timeline')} />}
         
         {/* ATS Templates with mock data */}
-        {templateId === 'ats-1' && <CVTemplateATS1 data={getMockData()} />}
-        {templateId === 'ats-2' && <CVTemplateATS2 data={getMockData()} />}
-        {templateId === 'ats-3' && <CVTemplateATS3 data={getMockData()} />}
-        {templateId === 'jobleads' && <CVTemplateJobLeads data={getMockData()} />}
-      </div>
+        {templateId === 'ats-1' && <CVTemplateATS1 data={getMockData('ats-1')} />}
+        {templateId === 'ats-2' && <CVTemplateATS2 data={getMockData('ats-2')} />}
+        {templateId === 'ats-3' && <CVTemplateATS3 data={getMockData('ats-3')} />}
+        {templateId === 'jobleads' && <CVTemplateJobLeads data={getMockData('jobleads')} />}
+      </ScaledPreview>
       {selected && (
         <div style={{
           position: 'absolute',

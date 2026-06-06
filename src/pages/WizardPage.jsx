@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCv } from '../context/CvContext';
 import { ArrowLeft, ArrowRight, Eye, LayoutTemplate, User, FileText, Briefcase, GraduationCap, Zap, Settings, Globe, Sparkles, Home } from 'lucide-react';
 import Preview from '../components/Preview/Preview';
+import ScaledPreview from '../components/Preview/ScaledPreview';
 
 // Import step components
 import StepPersonalInfo from '../components/wizard/StepPersonalInfo';
@@ -12,6 +13,9 @@ import StepSkills from '../components/wizard/StepSkills';
 import StepLanguages from '../components/wizard/StepLanguages';
 import StepInterests from '../components/wizard/StepInterests';
 import StepCertifications from '../components/wizard/StepCertifications';
+import StepProjects from '../components/wizard/StepProjects';
+import StepExtracurricular from '../components/wizard/StepExtracurricular';
+import StepCustomSection from '../components/wizard/StepCustomSection';
 import StepStructure from '../components/wizard/StepStructure';
 
 const FIXED_STEPS_START = [
@@ -28,8 +32,11 @@ const SECTION_MAP = {
   education: { label: 'Formation', icon: <GraduationCap size={18} />, component: <StepEducation /> },
   skills: { label: 'Compétences', icon: <Zap size={18} />, component: <StepSkills /> },
   languages: { label: 'Langues', icon: <Globe size={18} />, component: <StepLanguages /> },
+  projects: { label: 'Projets', icon: <FileText size={18} />, component: <StepProjects /> },
+  extracurricular: { label: 'Bénévolat & Extrascolaire', icon: <Sparkles size={18} />, component: <StepExtracurricular /> },
   interests: { label: 'Loisirs', icon: <Sparkles size={18} />, component: <StepInterests /> },
   certifications: { label: 'Certifications', icon: <GraduationCap size={18} />, component: <StepCertifications /> },
+  customSections: { label: 'Rubriques Perso', icon: <Settings size={18} />, component: <StepCustomSection /> },
 };
 
 const WizardPage = () => {
@@ -73,6 +80,7 @@ const WizardPage = () => {
           className="btn btn-ghost"
           style={{ padding: '0.5rem', color: 'var(--text-muted)' }}
           title="Retour à l'accueil"
+          aria-label="Retour à l'accueil"
         >
           <Home size={18} />
         </button>
@@ -81,6 +89,7 @@ const WizardPage = () => {
           className="btn btn-ghost"
           style={{ padding: '0.5rem', color: 'var(--text-muted)' }}
           title="Changer de template"
+          aria-label="Changer de template"
         >
           <LayoutTemplate size={18} />
         </button>
@@ -91,8 +100,9 @@ const WizardPage = () => {
         {/* Step pills */}
         <nav style={{ display: 'flex', gap: '0.375rem', flex: 1, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {STEPS.map((step, i) => (
-            <div
+            <button
               key={i}
+              onClick={() => navigate('wizard', i)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -113,12 +123,14 @@ const WizardPage = () => {
                     ? 'var(--primary-700)'
                     : 'var(--text-muted)',
                 transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                border: 'none',
               }}
             >
               <span>{step.icon}</span>
               <span>{step.label}</span>
               {i < currentStep && <span style={{ fontSize: '0.75rem' }}>✓</span>}
-            </div>
+            </button>
           ))}
         </nav>
 
@@ -129,11 +141,11 @@ const WizardPage = () => {
 
         {/* Mobile preview toggle */}
         <button
-          className="btn btn-secondary"
+          className="btn btn-secondary mobile-only-btn"
           onClick={() => setShowPreviewMobile(s => !s)}
           style={{ padding: '0.5rem 0.875rem', fontSize: '0.8rem', gap: '0.35rem' }}
         >
-          <Eye size={15} /> Aperçu
+          <Eye size={15} /> {showPreviewMobile ? 'Formulaire' : 'Aperçu'}
         </button>
       </header>
 
@@ -143,9 +155,9 @@ const WizardPage = () => {
       </div>
 
       {/* Main layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: showPreviewMobile ? '1fr' : '1fr minmax(auto, 520px)', flex: 1, overflow: 'hidden' }}>
+      <div className="wizard-layout-container">
         {/* Left — Wizard Form */}
-        <main style={{ padding: 'clamp(1.5rem, 4vw, 3rem)', overflowY: 'auto', maxWidth: '780px', margin: '0 auto', width: '100%' }}>
+        <main className={`wizard-form-panel ${showPreviewMobile ? 'hide-mobile' : ''}`}>
           {/* Step label */}
           <div style={{ marginBottom: '2rem' }}>
             <p style={{ fontSize: '0.8rem', color: 'var(--primary-500)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.375rem' }}>
@@ -198,30 +210,15 @@ const WizardPage = () => {
         </main>
 
         {/* Right — Live Preview */}
-        {!showPreviewMobile && (
-          <aside style={{
-            backgroundColor: '#d1d5db',
-            overflowY: 'auto',
-            padding: '2rem 1rem',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            borderLeft: '1px solid var(--border-color)',
-            backgroundImage: 'radial-gradient(circle at 1px 1px, #9ca3af 1px, transparent 0)',
-            backgroundSize: '20px 20px',
-            position: 'sticky',
-            top: '62px',
-            height: 'calc(100vh - 62px)',
-          }}>
-            <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
-              Aperçu en direct
-            </p>
-            {/* Scale down CV preview to fit sidebar */}
-            <div style={{ transform: 'scale(0.52)', transformOrigin: 'top center', width: '192%', pointerEvents: 'none' }}>
-              <Preview />
-            </div>
-          </aside>
-        )}
+        <aside className={`wizard-preview-sidebar ${showPreviewMobile ? 'show-mobile' : ''}`}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+            Aperçu en direct
+          </p>
+          {/* Scale CV preview to fit the sidebar width (no magic numbers) */}
+          <ScaledPreview style={{ pointerEvents: 'none' }}>
+            <Preview />
+          </ScaledPreview>
+        </aside>
       </div>
     </div>
   );
