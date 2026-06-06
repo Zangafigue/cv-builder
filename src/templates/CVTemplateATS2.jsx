@@ -1,3 +1,4 @@
+import { getTranslation } from './shared/translations';
 import React from 'react';
 
 const ACCENT = '#1B3A6B'; // Bleu marine sobre, pro
@@ -182,6 +183,8 @@ const groupSkills = (skills) => {
 };
 
 export default function CVTemplateATS2({ data }) {
+  const language = data?.language || 'FR';
+  const t = (key) => getTranslation(key, language);
   const d = data || {};
   const contactParts = [
     d.phone, d.email, d.address,
@@ -202,14 +205,14 @@ export default function CVTemplateATS2({ data }) {
 
       {/* PROFIL */}
       {d.summary && (
-        <Section title="Profil Professionnel">
+        <Section title={t('profile')}>
           <p style={s.summary}>{d.summary}</p>
         </Section>
       )}
 
       {/* EXPÉRIENCE */}
       {d.experience?.length > 0 && (
-        <Section title="Expérience Professionnelle">
+        <Section title={t('experience')}>
           {d.experience.map((exp, i) => (
             <Entry
               key={i}
@@ -223,9 +226,9 @@ export default function CVTemplateATS2({ data }) {
         </Section>
       )}
 
-      {/* FORMATION */}
+      {/* {t('education').toUpperCase()} */}
       {d.education?.length > 0 && (
-        <Section title="Formation">
+        <Section title={t('education')}>
           {d.education.map((edu, i) => (
             <Entry
               key={i}
@@ -239,16 +242,16 @@ export default function CVTemplateATS2({ data }) {
         </Section>
       )}
 
-      {/* COMPÉTENCES */}
+      {/* {t('skills').toUpperCase()} */}
       {d.skills?.length > 0 && (
-        <Section title="Compétences Techniques">
+        <Section title={t('skills')}>
           {groupSkills(d.skills)}
         </Section>
       )}
 
-      {/* CERTIFICATIONS */}
+      {/* {t('certifications').toUpperCase()} */}
       {d.certifications?.length > 0 && (
-        <Section title="Certifications">
+        <Section title={t('certifications')}>
           {d.certifications.map((c, i) => (
             <div key={i} style={s.certifItem}>
               <strong>{c.name}</strong>{c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}
@@ -257,9 +260,9 @@ export default function CVTemplateATS2({ data }) {
         </Section>
       )}
 
-      {/* LANGUES */}
+      {/* {t('languages').toUpperCase()} */}
       {d.languages?.length > 0 && (
-        <Section title="Langues">
+        <Section title={t('languages')}>
           <div style={s.langRow}>
             {d.languages.map((l, i) => {
               const name = typeof l === 'string' ? l : l.name;
@@ -270,9 +273,9 @@ export default function CVTemplateATS2({ data }) {
         </Section>
       )}
 
-      {/* INTÉRÊTS */}
+      {/* {t('interests').toUpperCase()} */}
       {d.interests?.length > 0 && (
-        <Section title="Centres d'intérêt">
+        <Section title={t('interests')}>
           <div style={{ fontSize: '10.5pt', color: '#333' }}>
             {d.interests.map((t, i) => {
               const label = typeof t === 'string' ? t : (t.name || t);

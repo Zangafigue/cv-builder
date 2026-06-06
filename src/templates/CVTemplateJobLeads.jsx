@@ -1,8 +1,9 @@
+import { getTranslation } from './shared/translations';
 // CVTemplateJobLeads.jsx
 // Reproduction fidèle du template JobLeads vu dans les screenshots :
 // - Photo ronde à gauche du nom
 // - En-tête : nom + infos de contact inline
-// - Sections : RÉSUMÉ, EXPÉRIENCE PROFESSIONNELLE, FORMATION, CONNAISSANCES, LANGUES
+// - Sections : {t('profile').toUpperCase()}, {t('experience').toUpperCase()}, {t('education').toUpperCase()}, {t('skills').toUpperCase()}, {t('languages').toUpperCase()}
 // - Layout 2 colonnes pour date | contenu
 // - Séparateurs horizontaux entre sections
 // - Typographie sobre, noire sur blanc
@@ -92,7 +93,7 @@ const css = `
   }
   .jl-section-body { flex: 1; }
 
-  /* ── RÉSUMÉ ─────────────────────────────────── */
+  /* ── {t('profile').toUpperCase()} ─────────────────────────────────── */
   .jl-summary {
     font-size: 9.5pt;
     color: #333;
@@ -149,7 +150,7 @@ const css = `
     margin-top: 2px;
   }
 
-  /* ── CONNAISSANCES (skills grid) ────────────── */
+  /* ── {t('skills').toUpperCase()} (skills grid) ────────────── */
   .jl-skills-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -163,7 +164,7 @@ const css = `
     gap: 6px;
   }
 
-  /* ── LANGUES ────────────────────────────────── */
+  /* ── {t('languages').toUpperCase()} ────────────────────────────────── */
   .jl-langs {
     display: flex;
     flex-direction: column;
@@ -192,7 +193,7 @@ const css = `
     max-width: 120px;
   }
 
-  /* ── CERTIFICATIONS ─────────────────────────── */
+  /* ── {t('certifications').toUpperCase()} ─────────────────────────── */
   .jl-certif-item {
     font-size: 9.5pt;
     color: #333;
@@ -209,7 +210,7 @@ const css = `
   .jl-certif-name { font-weight: 600; color: #111; }
   .jl-certif-meta { color: #666; font-size: 9pt; }
 
-  /* ── INTÉRÊTS ───────────────────────────────── */
+  /* ── {t('interests').toUpperCase()} ───────────────────────────────── */
   .jl-interests {
     font-size: 9.5pt;
     color: #333;
@@ -264,6 +265,8 @@ function Entry({ date, title, company, location, bullets = [], desc }) {
 // ── Composant principal ────────────────────────────────────────────────────
 
 export default function CVTemplateJobLeads({ data }) {
+  const language = data?.language || 'FR';
+  const t = (key) => getTranslation(key, language);
   const d = data || defaultData;
 
   const contactParts = [
@@ -302,16 +305,16 @@ export default function CVTemplateJobLeads({ data }) {
           </div>
         </div>
 
-        {/* ── RÉSUMÉ ── */}
+        {/* ── {t('profile').toUpperCase()} ── */}
         {d.summary && (
-          <Section label="RÉSUMÉ">
+          <Section label={t('profile').toUpperCase()}>
             <p className="jl-summary">{d.summary}</p>
           </Section>
         )}
 
-        {/* ── EXPÉRIENCE PROFESSIONNELLE ── */}
+        {/* ── {t('experience').toUpperCase()} ── */}
         {d.experience?.length > 0 && (
-          <Section label="EXPÉRIENCE PROFESSIONNELLE">
+          <Section label={t('experience').toUpperCase()}>
             {d.experience.map((exp, i) => (
               <Entry
                 key={i}
@@ -325,9 +328,9 @@ export default function CVTemplateJobLeads({ data }) {
           </Section>
         )}
 
-        {/* ── FORMATION ── */}
+        {/* ── {t('education').toUpperCase()} ── */}
         {d.education?.length > 0 && (
-          <Section label="FORMATION">
+          <Section label={t('education').toUpperCase()}>
             {d.education.map((edu, i) => (
               <Entry
                 key={i}
@@ -341,9 +344,9 @@ export default function CVTemplateJobLeads({ data }) {
           </Section>
         )}
 
-        {/* ── CERTIFICATIONS ── */}
+        {/* ── {t('certifications').toUpperCase()} ── */}
         {d.certifications?.length > 0 && (
-          <Section label="CERTIFICATIONS">
+          <Section label={t('certifications').toUpperCase()}>
             {d.certifications.map((c, i) => (
               <div key={i} className="jl-certif-item">
                 <span className="jl-certif-name">{c.name}</span>
@@ -355,9 +358,9 @@ export default function CVTemplateJobLeads({ data }) {
           </Section>
         )}
 
-        {/* ── CONNAISSANCES ── */}
+        {/* ── {t('skills').toUpperCase()} ── */}
         {d.skills?.length > 0 && (
-          <Section label="CONNAISSANCES">
+          <Section label={t('skills').toUpperCase()}>
             <div className="jl-skills-grid">
               {d.skills.map((sk, i) => {
                 const name = typeof sk === 'string' ? sk : sk.name;
@@ -372,9 +375,9 @@ export default function CVTemplateJobLeads({ data }) {
           </Section>
         )}
 
-        {/* ── LANGUES ── */}
+        {/* ── {t('languages').toUpperCase()} ── */}
         {d.languages?.length > 0 && (
-          <Section label="LANGUES">
+          <Section label={t('languages').toUpperCase()}>
             <div className="jl-langs">
               {d.languages.map((l, i) => {
                 const name = typeof l === 'string' ? l : l.name;
@@ -393,7 +396,7 @@ export default function CVTemplateJobLeads({ data }) {
 
         {/* ── CENTRES D'INTÉRÊT ── */}
         {d.interests?.length > 0 && (
-          <Section label="INTÉRÊTS">
+          <Section label={t('interests').toUpperCase()}>
             <div className="jl-interests">
               {d.interests.map((t, i) => {
                 const label = typeof t === 'string' ? t : (t.name || t);
