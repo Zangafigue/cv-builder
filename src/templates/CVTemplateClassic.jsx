@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SkillBar from './shared/SkillBar';
@@ -274,6 +275,7 @@ export default function CVTemplateClassic({ data }) {
       <div style={{ backgroundColor: accentColor, color: 'white', padding: '2.5cm 1.5cm', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {/* Contact */}
         <div>
+          <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={96} style={{ margin: '0 0 1rem', border: '3px solid rgba(255,255,255,0.4)' }} />
           <h1 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', fontWeight: 700, marginBottom: '0.25rem', lineHeight: 1.2, wordBreak: 'break-word' }}>
             {personalInfo.fullName || 'Votre Nom'}
           </h1>

@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SkillBar from './shared/SkillBar';
@@ -232,7 +233,8 @@ export default function CVTemplateElegant({ data }) {
     >
       {/* Header Centralisé avec lignes fines */}
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h1 style={{ 
+        <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={104} style={{ margin: '0 auto 1.25rem' }} />
+        <h1 style={{
           fontSize: '3rem', 
           margin: '0 0 0.5rem 0', 
           fontWeight: 400, 

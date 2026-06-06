@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SkillBar from './shared/SkillBar';
@@ -277,6 +278,7 @@ export default function CVTemplateTimeline({ data }) {
     >
       {/* Centered Header */}
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={104} style={{ margin: '0 auto 1.25rem' }} />
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontWeight: 300, color: '#1a202c', letterSpacing: '2px', textTransform: 'uppercase' }}>
           {renderFullName()}
         </h1>

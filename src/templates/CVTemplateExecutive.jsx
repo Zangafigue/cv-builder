@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SectionTitle from './shared/SectionTitle';
@@ -245,6 +246,7 @@ export default function CVTemplateExecutive({ data }) {
     >
       {/* Heavy Top Border Header */}
       <div style={{ backgroundColor: themeColor, padding: '2.5rem', color: 'white' }}>
+        <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={100} style={{ marginBottom: '1rem', border: '3px solid rgba(255,255,255,0.55)' }} />
         <h1 style={{ fontSize: '2.75rem', marginBottom: '0.5rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>
           {personalInfo.fullName || 'Votre Nom'}
         </h1>

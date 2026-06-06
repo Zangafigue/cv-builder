@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SkillBar from './shared/SkillBar';
@@ -256,6 +257,7 @@ export default function CVTemplateModern({ data }) {
     >
       {/* Header */}
       <div style={{ textAlign: 'center', borderBottom: `2px solid ${themeColor}`, paddingBottom: '1.5rem', marginBottom: '2rem' }}>
+        <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={110} style={{ margin: '0 auto 1rem' }} />
         <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', fontFamily: 'var(--font-display)', color: themeColor, textTransform: 'uppercase', letterSpacing: '1px' }}>
           {personalInfo.fullName || 'Votre Nom'}
         </h1>

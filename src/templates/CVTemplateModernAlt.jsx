@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SkillBar from './shared/SkillBar';
@@ -264,6 +265,7 @@ export default function CVTemplateModernAlt({ data }) {
       <div style={{ backgroundColor: themeColor, color: 'white', padding: '2.5rem 3rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ maxWidth: '60%' }}>
+            <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={90} style={{ marginBottom: '1rem', border: '3px solid rgba(255,255,255,0.5)' }} />
             <h1 style={{ fontSize: '2.5rem', marginBottom: '0.25rem', fontWeight: 800, letterSpacing: '-0.5px' }}>
               {personalInfo.fullName || 'Votre Nom'}
             </h1>

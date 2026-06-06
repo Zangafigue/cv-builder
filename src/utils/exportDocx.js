@@ -3,11 +3,22 @@ import {
   Packer,
   Paragraph,
   TextRun,
+  ImageRun,
   HeadingLevel,
   AlignmentType,
   BorderStyle,
 } from 'docx';
 import { saveAs } from 'file-saver';
+import { templateSupportsPhoto } from '../templates/templateMeta';
+
+// Decode a base64 data URL (data:image/...;base64,XXXX) into bytes for docx.
+const dataUrlToUint8 = (dataUrl) => {
+  const b64 = (dataUrl || '').split(',')[1] || '';
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +92,7 @@ export const exportToDocx = async (cvData) => {
     customSections = [],
     sectionsOrder = [],
     language = 'FR',
+    template = '',
   } = cvData;
 
   const lang = (language === 'EN' || language === 'en') ? 'EN' : 'FR';
@@ -115,6 +127,27 @@ export const exportToDocx = async (cvData) => {
   };
 
   const children = [];
+
+  // ── PHOTO (only if the template supports it and one is set) ──────────────────
+  if (personalInfo.photo && templateSupportsPhoto(template)) {
+    try {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: dxa(3) },
+          children: [
+            new ImageRun({
+              type: 'jpg',
+              data: dataUrlToUint8(personalInfo.photo),
+              transformation: { width: 90, height: 90 },
+            }),
+          ],
+        })
+      );
+    } catch (e) {
+      console.warn('Could not embed photo in DOCX:', e);
+    }
+  }
 
   // ── HEADER ─────────────────────────────────────────────────────────────────
   children.push(

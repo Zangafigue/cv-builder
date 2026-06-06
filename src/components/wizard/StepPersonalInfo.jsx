@@ -4,10 +4,12 @@ import { Upload, X, Camera, Square, Circle, Sparkles, Check, ZoomIn, Maximize } 
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../utils/cropImage';
 import { downscaleDataUrl } from '../../utils/downscaleImage';
+import { templateSupportsPhoto } from '../../templates/templateMeta';
 
 const StepPersonalInfo = () => {
   const { cvData, updatePersonalInfo } = useCv();
   const { personalInfo } = cvData;
+  const photoSupported = templateSupportsPhoto(cvData.template);
   const [isEditing, setIsEditing] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   
@@ -202,8 +204,19 @@ const StepPersonalInfo = () => {
       <div className="personal-info-layout" style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '2rem', alignItems: 'start' }}>
         {/* Photo Upload Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ 
-            width: '150px', 
+          {!photoSupported ? (
+            <div style={{
+              fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center',
+              border: '1px dashed var(--border-color)', borderRadius: '12px',
+              padding: '1.25rem 1rem', backgroundColor: 'var(--surface-50)', lineHeight: 1.5,
+            }}>
+              <Camera size={22} style={{ opacity: 0.5, marginBottom: '0.5rem' }} /><br />
+              Ce modèle (ATS) n'affiche pas de photo — un CV optimisé ATS doit rester sans image. Choisissez un autre modèle pour ajouter une photo.
+            </div>
+          ) : (
+          <>
+          <div style={{
+            width: '150px',
             height: '150px', 
             borderRadius: personalInfo.photoSettings?.shape === 'round' ? '50%' : '12px',
             border: '2px dashed var(--border-color)',
@@ -322,6 +335,8 @@ const StepPersonalInfo = () => {
                 ))}
               </div>
             </div>
+          )}
+          </>
           )}
         </div>
 

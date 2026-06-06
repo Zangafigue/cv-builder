@@ -1,4 +1,5 @@
 import { getTranslation } from './shared/translations';
+import CvPhoto from './shared/CvPhoto';
 import React from 'react';
 import FormatDate from './shared/FormatDate';
 import SkillBar from './shared/SkillBar';
@@ -267,14 +268,18 @@ export default function CVTemplateCreative({ data }) {
         
         {/* {t('profile')}e Info */}
         <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
-          {/* Circular initials as logo substitute */}
-          <div style={{ 
-            width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem',
-            fontSize: '2.5rem', fontWeight: 'bold', color: 'white', border: '3px solid rgba(255,255,255,0.5)'
-          }}>
-            {getInitials(personalInfo.fullName)}
-          </div>
+          {/* Photo if present, otherwise circular initials */}
+          {personalInfo.photo ? (
+            <CvPhoto photo={personalInfo.photo} settings={personalInfo.photoSettings} size={100} style={{ margin: '0 auto 1.5rem', border: '3px solid rgba(255,255,255,0.5)' }} />
+          ) : (
+            <div style={{
+              width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem',
+              fontSize: '2.5rem', fontWeight: 'bold', color: 'white', border: '3px solid rgba(255,255,255,0.5)'
+            }}>
+              {getInitials(personalInfo.fullName)}
+            </div>
+          )}
           
           <h1 style={{ fontSize: '2rem', margin: '0 0 0.5rem 0', fontWeight: 800, lineHeight: 1.1 }}>
             {personalInfo.fullName || 'Votre Nom'}
