@@ -80,13 +80,18 @@ export default async function getCroppedImg(
   // paste generated rotate image with the correct offsets for x,y crop values.
   ctx.putImageData(data, 0, 0)
 
-  // As Base64 string
-  return canvas.toDataURL('image/jpeg');
-
-  // As a blob
-  // return new Promise((resolve, reject) => {
-  //   canvas.toBlob((file) => {
-  //     resolve(URL.createObjectURL(file))
-  //   }, 'image/jpeg')
-  // })
+  // Downscale to a sensible max (the photo is shown small on the CV) and
+  // re-encode at reduced quality, so the base64 stored in localStorage stays
+  // small instead of weighing several MB.
+  const MAX_DIM = 512
+  const QUALITY = 0.82
+  const scale = Math.min(1, MAX_DIM / Math.max(pixelCrop.width, pixelCrop.height))
+  if (scale < 1) {
+    const out = document.createElement('canvas')
+    out.width = Math.max(1, Math.round(pixelCrop.width * scale))
+    out.height = Math.max(1, Math.round(pixelCrop.height * scale))
+    out.getContext('2d').drawImage(canvas, 0, 0, out.width, out.height)
+    return out.toDataURL('image/jpeg', QUALITY)
+  }
+  return canvas.toDataURL('image/jpeg', QUALITY)
 }

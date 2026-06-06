@@ -3,6 +3,7 @@ import { useCv } from '../../context/CvContext';
 import { Upload, X, Camera, Square, Circle, Sparkles, Check, ZoomIn, Maximize } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../utils/cropImage';
+import { downscaleDataUrl } from '../../utils/downscaleImage';
 
 const StepPersonalInfo = () => {
   const { cvData, updatePersonalInfo } = useCv();
@@ -16,9 +17,12 @@ const StepPersonalInfo = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        updatePersonalInfo('originalPhoto', reader.result);
-        updatePersonalInfo('photo', reader.result); // Initial preview
+      reader.onloadend = async () => {
+        // Bound the source photo (kept for re-cropping) so the base64 stored in
+        // localStorage stays small; the cropped result is bounded again in cropImage.
+        const bounded = await downscaleDataUrl(reader.result, { maxDim: 1024 });
+        updatePersonalInfo('originalPhoto', bounded);
+        updatePersonalInfo('photo', bounded); // Initial preview until cropping
         setIsEditing(true);
       };
       reader.readAsDataURL(file);
@@ -195,7 +199,7 @@ const StepPersonalInfo = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '2rem', alignItems: 'start' }}>
+      <div className="personal-info-layout" style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '2rem', alignItems: 'start' }}>
         {/* Photo Upload Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
           <div style={{ 
@@ -323,23 +327,23 @@ const StepPersonalInfo = () => {
 
         {/* Fields */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {field('fullName', 'Prénom et Nom', 'text', 'Jean Dupont')}
             {field('jobTitle', 'Titre du CV / Intitulé de poste', 'text', 'Développeur Web')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {field('email', 'Adresse e-mail', 'email', 'jean.dupont@email.com')}
             {field('phone', 'Téléphone', 'tel', '+33 6 12 34 56 78')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {field('location', 'Ville / Adresse', 'text', 'Paris, France')}
             {field('birthDate', 'Date de naissance', 'date', '')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {field('birthPlace', 'Lieu de naissance', 'text', 'Paris')}
             {field('linkedin', 'LinkedIn (optionnel)', 'url', 'linkedin.com/in/votre-profil')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {field('website', 'Site web / Portfolio', 'url', 'monsite.com')}
           </div>
         </div>
