@@ -22,8 +22,11 @@ const SECTION_LABELS = {
   education: 'Formation',
   skills: 'Compétences Clés',
   languages: 'Langues Parlées',
-  interests: 'Centres d\'intérêt',
+  projects: 'Projets Réalisés',
+  extracurricular: 'Activités Extrascolaires & Bénévolat',
   certifications: 'Certifications',
+  interests: 'Loisirs & Intérêts',
+  customSections: 'Rubriques Personnalisées',
 };
 
 const SortableItem = ({ id, onRemove }) => {
@@ -86,7 +89,7 @@ const SortableItem = ({ id, onRemove }) => {
 
 const StepStructure = () => {
   const { cvData, updateTemplateSettings } = useCv();
-  const { sectionsOrder = ['experience', 'education', 'skills', 'languages'] } = cvData;
+  const { sectionsOrder = ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections'] } = cvData;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
