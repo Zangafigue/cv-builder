@@ -227,76 +227,96 @@ export default function CVTemplateATS3({ data }) {
         </Section>
       )}
 
-      {/* EXPÉRIENCE */}
-      {d.experience?.length > 0 && (
-        <Section title={t('experience')}>
-          {d.experience.map((exp, i) => (
-            <Entry
-              key={i}
-              title={exp.title}
-              sub={exp.company}
-              date={exp.period}
-              location={exp.location}
-              desc={exp.description}
-            />
-          ))}
-        </Section>
-      )}
-
-      {/* {t('education').toUpperCase()} */}
-      {d.education?.length > 0 && (
-        <Section title={t('education')}>
-          {d.education.map((edu, i) => (
-            <Entry
-              key={i}
-              title={edu.degree}
-              sub={edu.school}
-              date={edu.period}
-              location={edu.location}
-              desc={edu.description}
-            />
-          ))}
-        </Section>
-      )}
-
-      {/* STACK TECHNIQUE (section dédiée pour les mots-clés ATS) */}
-      <StackSection skills={d.skills} language={language} />
-
-      {/* {t('certifications').toUpperCase()} */}
-      {d.certifications?.length > 0 && (
-        <Section title={t('certifications')}>
-          {d.certifications.map((c, i) => (
-            <div key={i} style={s.certifItem}>
-              <strong>{c.name}</strong>{c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}
-            </div>
-          ))}
-        </Section>
-      )}
-
-      {/* {t('languages').toUpperCase()} */}
-      {d.languages?.length > 0 && (
-        <Section title={t('languages')}>
-          <div style={s.langRow}>
-            {d.languages.map((l, i) => {
-              const name = typeof l === 'string' ? l : l.name;
-              const level = typeof l === 'object' && l.level ? ` — ${l.level}` : '';
-              return <span key={i}><strong>{name}</strong>{level}</span>;
-            })}
-          </div>
-        </Section>
-      )}
-
-      {/* {t('interests').toUpperCase()} */}
-      {d.interests?.length > 0 && (
-        <Section title={t('interests')}>
-          <div style={{ fontSize: '10.5pt', color: '#333' }}>
-            {d.interests.map((t, i) => {
-              const label = typeof t === 'string' ? t : (t.name || t);
-              return <span key={i}>{label}{i < d.interests.length - 1 ? ' · ' : ''}</span>;
-            })}
-          </div>
-        </Section>
-      )}
+      {/* Sections in the user-defined order (sectionsOrder) */}
+      {(d.sectionsOrder || ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections']).map((sid) => {
+        switch (sid) {
+          case 'experience':
+            return d.experience?.length > 0 ? (
+              <Section key={sid} title={t('experience')}>
+                {d.experience.map((exp, i) => (
+                  <Entry key={i} title={exp.title} sub={exp.company} date={exp.period} location={exp.location} desc={exp.description} />
+                ))}
+              </Section>
+            ) : null;
+          case 'education':
+            return d.education?.length > 0 ? (
+              <Section key={sid} title={t('education')}>
+                {d.education.map((edu, i) => (
+                  <Entry key={i} title={edu.degree} sub={edu.school} date={edu.period} location={edu.location} desc={edu.description} />
+                ))}
+              </Section>
+            ) : null;
+          case 'projects':
+            return d.projects?.length > 0 ? (
+              <Section key={sid} title={t('projects')}>
+                {d.projects.map((proj, i) => (
+                  <Entry key={i} title={proj.title} sub={proj.type} desc={Array.isArray(proj.bullets) ? proj.bullets.join('\n') : proj.description} />
+                ))}
+              </Section>
+            ) : null;
+          case 'skills':
+            // Dedicated "tech stack" section for ATS keyword matching.
+            return <StackSection key={sid} skills={d.skills} language={language} />;
+          case 'certifications':
+            return d.certifications?.length > 0 ? (
+              <Section key={sid} title={t('certifications')}>
+                {d.certifications.map((c, i) => (
+                  <div key={i} style={s.certifItem}>
+                    <strong>{c.name}</strong>{c.date ? ` — ${c.date}` : ''}{c.org ? ` · ${c.org}` : ''}
+                  </div>
+                ))}
+              </Section>
+            ) : null;
+          case 'languages':
+            return d.languages?.length > 0 ? (
+              <Section key={sid} title={t('languages')}>
+                <div style={s.langRow}>
+                  {d.languages.map((l, i) => {
+                    const name = typeof l === 'string' ? l : l.name;
+                    const level = typeof l === 'object' && l.level ? ` — ${l.level}` : '';
+                    return <span key={i}><strong>{name}</strong>{level}</span>;
+                  })}
+                </div>
+              </Section>
+            ) : null;
+          case 'interests':
+            return d.interests?.length > 0 ? (
+              <Section key={sid} title={t('interests')}>
+                <div style={{ fontSize: '10.5pt', color: '#333' }}>
+                  {d.interests.map((it, i) => {
+                    const label = typeof it === 'string' ? it : (it.name || it);
+                    return <span key={i}>{label}{i < d.interests.length - 1 ? ' · ' : ''}</span>;
+                  })}
+                </div>
+              </Section>
+            ) : null;
+          case 'extracurricular':
+            return d.extracurricular?.length > 0 ? (
+              <Section key={sid} title={t('extracurricular')}>
+                <div style={{ fontSize: '10.5pt', color: '#333' }}>
+                  {d.extracurricular.map((item, i) => {
+                    const text = typeof item === 'string' ? item : (item.name || item.description || '');
+                    return text ? <div key={i} style={{ marginBottom: '3px' }}>{text}</div> : null;
+                  })}
+                </div>
+              </Section>
+            ) : null;
+          case 'customSections':
+            return d.customSections?.length > 0 ? (
+              <React.Fragment key={sid}>
+                {d.customSections.map((cs, i) => cs.name ? (
+                  <Section key={i} title={cs.name}>
+                    <div style={{ fontSize: '10.5pt', color: '#333', lineHeight: 1.5 }}>
+                      {(cs.content || '').split('\n').map((line, j) => (<div key={j}>{line}</div>))}
+                    </div>
+                  </Section>
+                ) : null)}
+              </React.Fragment>
+            ) : null;
+          default:
+            return null;
+        }
+      })}
     </div>
   );
 }

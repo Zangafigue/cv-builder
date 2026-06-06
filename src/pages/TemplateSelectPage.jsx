@@ -13,9 +13,8 @@ import {
   CVTemplateTimeline,
   CVTemplateATS1, 
   CVTemplateATS2, 
-  CVTemplateATS3, 
+  CVTemplateATS3,
   CVTemplateJobLeads,
-  CVTemplateBIT
 } from '../templates';
 import { getMockData } from '../utils/templateMapper';
 import ScaledPreview from '../components/Preview/ScaledPreview';
@@ -46,7 +45,6 @@ const templates = [
   { id: 'ats-2', name: 'ATS Executive', desc: 'Style dirigeant sobre, typographie serif.', badge: 'ATS', badgeColor: '#059669' },
   { id: 'ats-3', name: 'ATS Tech', desc: 'Optimisé IT/Dev, section stack technique dédiée.', badge: 'ATS', badgeColor: '#059669' },
   { id: 'jobleads', name: 'JobLeads Pro', desc: 'Photo ronde, sections RESUME/EXPERIENCE/FORMATION/CONNAISSANCES/LANGUES. Format sobre inspiré du template JobLeads.', badge: 'Recommandé', badgeColor: '#0F4C75' },
-  { id: 'bit', name: 'Burkina Institute of Technology', desc: 'Template officiel de BIT. ATS-friendly, sobre, académique.', badge: 'Académique', badgeColor: '#d97706' },
 ];
 
 
@@ -80,7 +78,6 @@ const TemplateThumbnail = ({ templateId, selected }) => {
         {templateId === 'ats-2' && <CVTemplateATS2 data={getMockData('ats-2')} />}
         {templateId === 'ats-3' && <CVTemplateATS3 data={getMockData('ats-3')} />}
         {templateId === 'jobleads' && <CVTemplateJobLeads data={getMockData('jobleads')} />}
-        {templateId === 'bit' && <CVTemplateBIT data={getMockData('bit')} />}
       </ScaledPreview>
       {selected && (
         <div style={{
