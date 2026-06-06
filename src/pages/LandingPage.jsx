@@ -1,13 +1,19 @@
 import { useCv } from '../context/CvContext';
-import { FilePlus, FileEdit, ArrowRight, Sparkles, Upload } from 'lucide-react';
+import { initialCvData } from '../context/initialCvData';
+import { FilePlus, FileEdit, ArrowRight, Sparkles, Upload, Loader } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { parseFile } from '../utils/ImportService';
 import { toast } from '../utils/toast';
+import { analyzeCvData } from '../utils/geminiService';
+import SuggestionsReviewModal from '../components/Suggestions/SuggestionsReviewModal';
 
 const LandingPage = () => {
   const { navigate, loadExampleData, clearData, setCvData } = useCv();
   const importInputRef = useRef(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
+  const [pendingImportData, setPendingImportData] = useState(null);
+  const [geminiSuggestions, setGeminiSuggestions] = useState(null);
 
   const handleCreateDesignFirst = () => {
     clearData();
@@ -36,11 +42,36 @@ const LandingPage = () => {
     reader.onload = (event) => {
       try {
         const jsonData = JSON.parse(event.target.result);
-        setCvData(jsonData);
+        if (!jsonData || typeof jsonData !== 'object') {
+          throw new Error("Le fichier n'est pas un objet JSON valide.");
+        }
+        if (!jsonData.personalInfo) {
+          throw new Error("Le fichier ne contient pas la section obligatoire 'personalInfo'.");
+        }
+
+        const mergedData = {
+          ...initialCvData,
+          ...jsonData,
+          personalInfo: {
+            ...initialCvData.personalInfo,
+            ...(jsonData.personalInfo || {})
+          },
+          experience: Array.isArray(jsonData.experience) ? jsonData.experience : [],
+          education: Array.isArray(jsonData.education) ? jsonData.education : [],
+          skills: Array.isArray(jsonData.skills) ? jsonData.skills : [],
+          languages: Array.isArray(jsonData.languages) ? jsonData.languages : [],
+          interests: Array.isArray(jsonData.interests) ? jsonData.interests : [],
+          certifications: Array.isArray(jsonData.certifications) ? jsonData.certifications : [],
+          projects: Array.isArray(jsonData.projects) ? jsonData.projects : [],
+          extracurricular: Array.isArray(jsonData.extracurricular) ? jsonData.extracurricular : [],
+          customSections: Array.isArray(jsonData.customSections) ? jsonData.customSections : [],
+        };
+
+        setCvData(mergedData);
         navigate('wizard', 0);
         toast.success('CV importé avec succès !');
       } catch (error) {
-        toast.error("Fichier JSON invalide. Assurez-vous qu'il s'agit d'un export CV Builder.");
+        toast.error("Fichier JSON invalide. " + error.message);
         console.error("Erreur d'importation:", error);
       }
     };
@@ -54,29 +85,50 @@ const LandingPage = () => {
 
     setIsImporting(true);
     try {
+      // Lazy-loaded so pdfjs/mammoth (~1 MB each) stay out of the main bundle.
+      const { parseFile } = await import('../utils/ImportService');
       const importedData = await parseFile(file);
-      
-      // Reset state and merge high-level personal info
-      clearData();
-      
-      // Wait for state to clear or just set fresh
-      setCvData(prev => ({
-        ...prev,
-        personalInfo: { 
-          ...prev.personalInfo, 
-          ...importedData.personalInfo,
-          photo: importedData.personalInfo.photo || prev.personalInfo.photo
-        },
-        skills: importedData.skills.length > 0 ? importedData.skills : prev.skills,
-        languages: importedData.languages.length > 0 ? importedData.languages : prev.languages,
-        experience: importedData.experience.length > 0 ? importedData.experience : prev.experience,
-        education: importedData.education.length > 0 ? importedData.education : prev.education,
-        interests: importedData.interests?.length > 0 ? importedData.interests.map(i => ({ id: crypto.randomUUID(), name: i })) : prev.interests,
-        certifications: importedData.certifications?.length > 0 ? importedData.certifications.map(c => ({ id: crypto.randomUUID(), ...c })) : prev.certifications,
-      }));
 
-      toast.info('Données extraites ! Vérifiez et complétez les informations avant de continuer.');
-      navigate('wizard', 0);
+      // Build the merged CV data object from parsed content
+      const mergedData = {
+        ...initialCvData,
+        personalInfo: {
+          ...initialCvData.personalInfo,
+          ...importedData.personalInfo,
+        },
+        skills: importedData.skills?.length > 0 ? importedData.skills : [],
+        languages: importedData.languages?.length > 0 ? importedData.languages : [],
+        experience: importedData.experience?.length > 0 ? importedData.experience : [],
+        education: importedData.education?.length > 0 ? importedData.education : [],
+        interests: importedData.interests?.length > 0
+          ? importedData.interests.map(i => ({ id: crypto.randomUUID(), name: typeof i === 'string' ? i : i.name }))
+          : [],
+        certifications: importedData.certifications?.length > 0
+          ? importedData.certifications.map(c => ({ id: crypto.randomUUID(), ...c }))
+          : [],
+        projects: [],
+        extracurricular: [],
+        customSections: [],
+      };
+
+      setPendingImportData(mergedData);
+
+      // Try AI analysis via the serverless proxy. If the service is unavailable
+      // (not configured, offline, rate-limited…), the catch falls back to a
+      // direct import — the AI step is a non-blocking enhancement.
+      setIsImporting(false);
+      setIsAnalyzing(true);
+      try {
+        const suggestions = await analyzeCvData(mergedData);
+        setGeminiSuggestions(suggestions);
+        setShowSuggestionsModal(true);
+      } catch (geminiErr) {
+        console.warn('AI analysis unavailable, skipping suggestions:', geminiErr);
+        toast.info('Analyse IA non disponible. Données importées directement.');
+        applyImportedData(mergedData);
+      } finally {
+        setIsAnalyzing(false);
+      }
     } catch (error) {
       toast.error("Erreur lors de l'importation : " + error.message);
       console.error("Import error:", error);
@@ -84,6 +136,17 @@ const LandingPage = () => {
       setIsImporting(false);
       e.target.value = null;
     }
+  };
+
+  const applyImportedData = (data) => {
+    clearData();
+    setCvData(data);
+    toast.success('CV importé avec succès ! Vérifiez et complétez les informations.');
+    navigate('wizard', 0);
+  };
+
+  const handleSuggestionsConfirm = (finalData) => {
+    applyImportedData(finalData);
   };
 
   return (
@@ -345,7 +408,7 @@ const LandingPage = () => {
         zIndex: 1,
       }}>
         {[
-          { value: '12+', label: 'Templates Pro' },
+          { value: '13+', label: 'Templates Pro' },
           { value: '100%', label: 'Gratuit' },
           { value: 'PDF', label: 'Export Haute Qualité' },
         ].map(stat => (
@@ -355,6 +418,45 @@ const LandingPage = () => {
           </div>
         ))}
       </div>
+
+      {/* Gemini Analysis Loading Overlay */}
+      {isAnalyzing && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          gap: '1.5rem',
+        }}>
+          <div style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', padding: '1.25rem', borderRadius: '1.5rem', display: 'flex' }}>
+            <Sparkles size={36} color="white" />
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', marginBottom: '0.75rem' }}>
+              <Loader size={20} color="#60a5fa" className="animate-spin" />
+              <span style={{ color: 'white', fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700 }}>Analyse IA en cours…</span>
+            </div>
+            <p style={{ color: '#94a3b8', maxWidth: '400px' }}>Gemini analyse votre CV et prépare des suggestions personnalisées pour améliorer la formulation et les mots-clés.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Gemini Suggestions Review Modal */}
+      <SuggestionsReviewModal
+        isOpen={showSuggestionsModal}
+        onClose={() => {
+          setShowSuggestionsModal(false);
+          if (pendingImportData) applyImportedData(pendingImportData);
+        }}
+        importedData={pendingImportData}
+        suggestions={geminiSuggestions}
+        onConfirm={handleSuggestionsConfirm}
+      />
     </div>
   );
 };

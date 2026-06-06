@@ -1,53 +1,45 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from '../utils/toast';
+import { initialCvData } from './initialCvData';
 
 const CvContext = createContext();
 
-const initialCvData = {
-  personalInfo: {
-    fullName: '',
-    jobTitle: '',
-    email: '',
-    phone: '',
-    location: '',
-    birthDate: '',
-    birthPlace: '',
-    nationality: '',
-    linkedin: '',
-    website: '',
-    summary: '',
-    photo: '', // Cropped/Final photo
-    originalPhoto: '', // Source photo for re-cropping
-    photoSettings: {
-      shape: 'round',
-      filter: 'none',
-      crop: { x: 0, y: 0 },
-      zoom: 1,
-      aspect: 1,
-    }
-  },
-  experience: [],
-  education: [],
-  skills: [],
-  languages: [],
-  interests: [],
-  certifications: [],
-  sectionsOrder: ['experience', 'education', 'skills', 'languages'],
-  template: 'modern',
-  themeColor: '#3b82f6',
-  typography: {
-    fontFamily: 'Inter',
-    fontSize: 'medium',
-  },
+// Hash routing helpers
+const getHashFromState = (page, step) => {
+  return page === 'wizard' ? `#wizard/${step}` : `#${page}`;
+};
+
+const parseStateFromHash = (hash) => {
+  if (!hash || hash === '#' || hash === '#landing') {
+    return { page: 'landing', step: 0 };
+  }
+  if (hash === '#template-select') {
+    return { page: 'template-select', step: 0 };
+  }
+  if (hash.startsWith('#wizard/')) {
+    const step = parseInt(hash.split('/')[1], 10);
+    return { page: 'wizard', step: isNaN(step) ? 0 : step };
+  }
+  if (hash === '#final') {
+    return { page: 'final', step: 0 };
+  }
+  return { page: 'landing', step: 0 };
 };
 
 // Pages: 'landing' | 'template-select' | 'wizard' | 'final'
 export const CvProvider = ({ children }) => {
   const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      return parseStateFromHash(window.location.hash).page;
+    }
     return localStorage.getItem('cv-builder-page') || 'landing';
   });
   
   const [currentStep, setCurrentStep] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      return parseStateFromHash(window.location.hash).step;
+    }
     const saved = localStorage.getItem('cv-builder-step');
     return saved ? parseInt(saved, 10) : 0;
   });
@@ -57,6 +49,27 @@ export const CvProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : initialCvData;
   });
 
+  // Listen to hash change (back/forward browser buttons)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const { page, step } = parseStateFromHash(window.location.hash);
+      setCurrentPage(page);
+      setCurrentStep(step);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Update hash when page/step changes
+  useEffect(() => {
+    const currentHash = window.location.hash;
+    const targetHash = getHashFromState(currentPage, currentStep);
+    if (currentHash !== targetHash) {
+      window.location.hash = targetHash;
+    }
+  }, [currentPage, currentStep]);
+
   useEffect(() => {
     localStorage.setItem('cv-builder-page', currentPage);
   }, [currentPage]);
@@ -65,8 +78,21 @@ export const CvProvider = ({ children }) => {
     localStorage.setItem('cv-builder-step', currentStep.toString());
   }, [currentStep]);
 
+  // Persist CV data — debounced so we don't serialize the whole document
+  // (including the base64 photo) on every keystroke, and guarded against the
+  // localStorage quota so a failure surfaces instead of silently losing data.
   useEffect(() => {
-    localStorage.setItem('cv-builder-data-v2', JSON.stringify(cvData));
+    const id = setTimeout(() => {
+      try {
+        localStorage.setItem('cv-builder-data-v2', JSON.stringify(cvData));
+      } catch (e) {
+        console.warn('Persist failed:', e);
+        if (e?.name === 'QuotaExceededError' || /quota/i.test(e?.message || '')) {
+          toast.warning("Sauvegarde locale pleine : réduisez la taille de la photo ou allégez le contenu pour éviter de perdre des données.");
+        }
+      }
+    }, 400);
+    return () => clearTimeout(id);
   }, [cvData]);
 
   const navigate = (page, step = 0) => {
@@ -89,7 +115,7 @@ export const CvProvider = ({ children }) => {
       setCurrentStep(s => s - 1);
       window.scrollTo(0, 0);
     } else {
-      navigate('template-select');
+      navigate('landing');
     }
   };
 
@@ -101,10 +127,14 @@ export const CvProvider = ({ children }) => {
   };
 
   const addItem = (field, item) => {
-    setCvData(prev => ({
-      ...prev,
-      [field]: [...prev[field], { id: uuidv4(), ...item }],
-    }));
+    setCvData(prev => {
+      const existingList = prev[field] || [];
+      const newItem = { id: item.id || uuidv4(), ...item };
+      return {
+        ...prev,
+        [field]: [...existingList, newItem],
+      };
+    });
   };
 
   const updateItem = (field, id, updatedItem) => {
@@ -187,7 +217,32 @@ export const CvProvider = ({ children }) => {
       certifications: [
         { id: uuidv4(), name: 'AWS Certified Developer', date: '2022', org: 'Amazon Web Services' },
       ],
-      sectionsOrder: ['experience', 'education', 'skills', 'languages', 'interests', 'certifications'],
+      projects: [
+        {
+          id: uuidv4(),
+          title: 'CV Builder Pro',
+          type: 'Projet Personnel',
+          bullets: [
+            'Conception et développement d\'une application web de création de CV',
+            'Intégration de l\'API Gemini pour l\'analyse de contenu et suggestions',
+            'Export PDF pixel-perfect et génération de documents Word (.docx)'
+          ]
+        }
+      ],
+      extracurricular: [
+        {
+          id: uuidv4(),
+          name: 'Bénévole — Croix-Rouge Française (2022 - Présent) : Secourisme et aide logistique lors de manifestations locales'
+        }
+      ],
+      customSections: [
+        {
+          id: uuidv4(),
+          name: 'Publications',
+          content: '• Dupont J., "L\'avenir du développement Full Stack", Tech Journal, 2024.'
+        }
+      ],
+      sectionsOrder: ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections'],
       template: 'modern',
       themeColor: '#3b82f6',
       typography: {
@@ -200,8 +255,7 @@ export const CvProvider = ({ children }) => {
 
   const clearData = () => {
     setCvData(initialCvData);
-    setCurrentPage('landing');
-    setCurrentStep(0);
+    navigate('landing');
     localStorage.removeItem('cv-builder-page');
     localStorage.removeItem('cv-builder-step');
     localStorage.removeItem('cv-builder-data-v2');
