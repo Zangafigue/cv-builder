@@ -26,7 +26,7 @@ export function printCvDocument(cvNode, { filename = 'CV', container = document 
   // 3. CSS custom properties (--cv-font-*) the preview wrapper sets on the document,
   //    which the cloned node would otherwise lose.
   const cs = getComputedStyle(cvNode);
-  const cvVars = ['--cv-font-family', '--cv-font-size', '--cv-line-height']
+  const cvVars = ['--cv-font-family', '--cv-font-size', '--cv-line-height', '--cv-size-scale']
     .map(v => {
       const val = cs.getPropertyValue(v).trim();
       return val ? `${v}: ${val};` : '';

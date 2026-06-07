@@ -17,13 +17,13 @@ const css = `
 
   .jl-cv {
     font-family: 'Source Sans 3', 'Arial', sans-serif;
-    font-size: 10pt;
+    font-size: calc(10pt * var(--cv-size-scale, 1));
     color: #1a1a1a;
     background: #fff;
     width: 210mm;
     min-height: 297mm;
-    padding: 14mm 16mm 14mm;
-    line-height: 1.45;
+    padding: 11mm 16mm 11mm;
+    line-height: 1.4;
   }
 
   /* ── HEADER ─────────────────────────────────── */
@@ -56,7 +56,7 @@ const css = `
   }
   .jl-header-info { flex: 1; }
   .jl-name {
-    font-size: 18pt;
+    font-size: 1.8em;
     font-weight: 700;
     letter-spacing: 0.5px;
     color: #111;
@@ -64,7 +64,7 @@ const css = `
     margin-bottom: 6px;
   }
   .jl-contact {
-    font-size: 9pt;
+    font-size: 0.9em;
     color: #444;
     display: flex;
     flex-wrap: wrap;
@@ -76,32 +76,34 @@ const css = `
   /* ── SECTION ────────────────────────────────── */
   .jl-section {
     display: grid;
-    grid-template-columns: 90px 1fr;
+    grid-template-columns: 112px 1fr;
+    column-gap: 14px;
     border-bottom: 1px solid #d0d0d0;
-    padding: 10px 0;
+    padding: 6px 0;
   }
   .jl-section:last-child { border-bottom: none; }
 
   .jl-section-label {
-    font-size: 8.5pt;
+    font-size: 0.85em;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.5px;
+    line-height: 1.25;
     color: #111;
     padding-top: 2px;
-    padding-right: 10px;
+    word-break: break-word;
   }
   .jl-section-body { flex: 1; }
 
   /* ── {t('profile').toUpperCase()} ─────────────────────────────────── */
   .jl-summary {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #333;
     line-height: 1.55;
   }
 
   /* ── ENTRY ──────────────────────────────────── */
-  .jl-entry { margin-bottom: 10px; }
+  .jl-entry { margin-bottom: 7px; }
   .jl-entry:last-child { margin-bottom: 0; }
 
   .jl-entry-top {
@@ -112,39 +114,44 @@ const css = `
     margin-bottom: 1px;
   }
   .jl-entry-date {
-    font-size: 8.5pt;
+    font-size: 0.85em;
     color: #555;
     line-height: 1.4;
   }
   .jl-entry-right {}
   .jl-entry-title {
     font-weight: 700;
-    font-size: 10pt;
+    font-size: 1em;
     color: #111;
   }
   .jl-entry-company {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #111;
     font-weight: 400;
   }
+  .jl-entry-meta {
+    font-weight: 400;
+    font-size: 0.85em;
+    color: #555;
+  }
   .jl-entry-location {
-    font-size: 9pt;
+    font-size: 0.9em;
     color: #555;
     float: right;
   }
   .jl-entry-bullets {
     list-style: disc;
     padding-left: 14px;
-    margin-top: 3px;
+    margin-top: 2px;
   }
   .jl-entry-bullets li {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #333;
-    line-height: 1.45;
-    margin-bottom: 2px;
+    line-height: 1.38;
+    margin-bottom: 1px;
   }
   .jl-entry-desc {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #333;
     line-height: 1.5;
     margin-top: 2px;
@@ -157,7 +164,7 @@ const css = `
     gap: 4px 20px;
   }
   .jl-skill-item {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #111;
     display: flex;
     align-items: center;
@@ -176,13 +183,13 @@ const css = `
     gap: 10px;
   }
   .jl-lang-name {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     font-weight: 600;
     color: #111;
     min-width: 60px;
   }
   .jl-lang-level {
-    font-size: 8.5pt;
+    font-size: 0.85em;
     color: #666;
   }
   .jl-lang-bar {
@@ -195,7 +202,7 @@ const css = `
 
   /* ── {t('certifications').toUpperCase()} ─────────────────────────── */
   .jl-certif-item {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #333;
     margin-bottom: 4px;
     padding-left: 12px;
@@ -208,11 +215,11 @@ const css = `
     color: #555;
   }
   .jl-certif-name { font-weight: 600; color: #111; }
-  .jl-certif-meta { color: #666; font-size: 9pt; }
+  .jl-certif-meta { color: #666; font-size: 0.9em; }
 
   /* ── {t('interests').toUpperCase()} ───────────────────────────────── */
   .jl-interests {
-    font-size: 9.5pt;
+    font-size: 0.95em;
     color: #333;
     line-height: 1.6;
   }
@@ -233,28 +240,35 @@ function Section({ label, children }) {
   );
 }
 
-function Entry({ date, title, company, location, bullets = [], desc }) {
+function Entry({ date, title, meta, company, location, bullets = [], desc }) {
+  // No date (e.g. projects) → use the full width and don't waste the 110px
+  // date column / bullet indent, which otherwise narrows text and adds height.
+  const hasDate = !!date;
+  const indent = hasDate ? '110px' : '0';
   return (
     <div className="jl-entry">
-      <div className="jl-entry-top">
-        <div className="jl-entry-date">{date}</div>
+      <div className="jl-entry-top" style={hasDate ? undefined : { gridTemplateColumns: '1fr' }}>
+        {hasDate && <div className="jl-entry-date">{date}</div>}
         <div className="jl-entry-right">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span className="jl-entry-title">{title}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
+            <span>
+              <span className="jl-entry-title">{title}</span>
+              {meta && <span className="jl-entry-meta"> · {meta}</span>}
+            </span>
             {location && <span className="jl-entry-location">{location}</span>}
           </div>
           {company && <div className="jl-entry-company">{company}</div>}
         </div>
       </div>
       {bullets.length > 0 && (
-        <div style={{ paddingLeft: '110px' }}>
+        <div style={{ paddingLeft: indent }}>
           <ul className="jl-entry-bullets">
             {bullets.map((b, i) => <li key={i}>{b}</li>)}
           </ul>
         </div>
       )}
       {desc && !bullets.length && (
-        <div style={{ paddingLeft: '110px' }}>
+        <div style={{ paddingLeft: indent }}>
           <div className="jl-entry-desc">{desc}</div>
         </div>
       )}
@@ -337,7 +351,7 @@ export default function CVTemplateJobLeads({ data }) {
               return d.projects?.length > 0 ? (
                 <Section key={sid} label={t('projects').toUpperCase()}>
                   {d.projects.map((proj, i) => (
-                    <Entry key={i} title={proj.title} company={proj.type}
+                    <Entry key={i} title={proj.title} meta={proj.type}
                       bullets={Array.isArray(proj.bullets) ? proj.bullets : (proj.description ? proj.description.split('\n').filter(Boolean) : [])} />
                   ))}
                 </Section>
@@ -362,7 +376,7 @@ export default function CVTemplateJobLeads({ data }) {
                       const level = typeof sk === 'object' && sk.showLevel && sk.level ? sk.level : null;
                       return (
                         <div key={i} className="jl-skill-item">
-                          {name}{level ? <span style={{ color: '#777', fontSize: '8.5pt' }}> ({level})</span> : ''}
+                          {name}{level ? <span style={{ color: '#777', fontSize: '0.85em' }}> ({level})</span> : ''}
                         </div>
                       );
                     })}
@@ -392,7 +406,7 @@ export default function CVTemplateJobLeads({ data }) {
                 <Section key={sid} label={t('interests').toUpperCase()}>
                   <div className="jl-interests">
                     {d.interests.map((it, i) => {
-                      const label = typeof it === 'string' ? it : (it.name || it);
+                      const label = typeof it === 'string' ? it : (it.name || '');
                       return <span key={i}>{label}{i < d.interests.length - 1 ? '  ·  ' : ''}</span>;
                     })}
                   </div>

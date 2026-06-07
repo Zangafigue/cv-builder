@@ -1,5 +1,9 @@
 import { Component } from 'react';
 
+function sameKeys(a = [], b = []) {
+  return a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
+}
+
 // React error boundaries must be class components. Catches render errors in the
 // subtree (e.g. a template that throws) so they don't white-screen the whole app.
 export default class ErrorBoundary extends Component {
@@ -14,6 +18,15 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('ErrorBoundary caught an error:', error, info);
+  }
+
+  // Recover automatically once any `resetKeys` entry changes — e.g. the user
+  // edits the CV after a transient render error — instead of staying stuck on
+  // the fallback until the component is remounted.
+  componentDidUpdate(prevProps) {
+    if (this.state.error && !sameKeys(prevProps.resetKeys, this.props.resetKeys)) {
+      this.reset();
+    }
   }
 
   reset = () => this.setState({ error: null });

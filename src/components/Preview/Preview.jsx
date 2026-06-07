@@ -24,6 +24,8 @@ const Preview = ({ overrideData } = {}) => {
 
   const getFontSize = (size) => size === 'small' ? '0.9rem' : size === 'large' ? '1.1rem' : '1rem';
   const getLineHeight = (lh) => lh === 'compact' ? '1.3' : lh === 'relaxed' ? '1.8' : '1.5';
+  // Unitless scale for templates whose type is sized in pt (e.g. JobLeads).
+  const getSizeScale = (size) => size === 'small' ? 0.9 : size === 'large' ? 1.06 : 1;
 
   const templateData = mapCvDataToTemplate(cvData, cvData.template);
 
@@ -34,10 +36,12 @@ const Preview = ({ overrideData } = {}) => {
       width: '100%',
       '--cv-font-family': cvData.typography?.fontFamily || 'sans-serif',
       '--cv-font-size': getFontSize(cvData.typography?.fontSize),
+      '--cv-size-scale': getSizeScale(cvData.typography?.fontSize),
       '--cv-line-height': getLineHeight(cvData.typography?.lineHeight),
     }}>
       <ErrorBoundary
         key={cvData.template}
+        resetKeys={[cvData]}
         fallback={
           <div style={{ width: 794, padding: '3rem', textAlign: 'center', background: '#fff', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: 8 }}>
             <strong>Aperçu indisponible</strong>
