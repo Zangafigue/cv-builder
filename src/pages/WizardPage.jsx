@@ -3,6 +3,7 @@ import { useCv } from '../context/CvContext';
 import { ArrowLeft, ArrowRight, Eye, LayoutTemplate, User, FileText, Briefcase, GraduationCap, Zap, Settings, Globe, Sparkles, Home } from 'lucide-react';
 import Preview from '../components/Preview/Preview';
 import ScaledPreview from '../components/Preview/ScaledPreview';
+import SuggestionsCoach from '../components/Suggestions/SuggestionsCoach';
 
 // Import step components
 import StepPersonalInfo from '../components/wizard/StepPersonalInfo';
@@ -182,6 +183,9 @@ const WizardPage = () => {
           <div className="animate-fade-in">
             {renderStep()}
           </div>
+
+          {/* Live, content-aware suggestions */}
+          <SuggestionsCoach />
 
           {/* Navigation Buttons */}
           <div style={{
