@@ -55,6 +55,11 @@ const css = `
     color: #bbb;
   }
   .jl-header-info { flex: 1; }
+  .jl-name-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
   .jl-name {
     font-size: 1.8em;
     font-weight: 700;
@@ -62,6 +67,18 @@ const css = `
     color: #111;
     line-height: 1.1;
     margin-bottom: 6px;
+  }
+  .jl-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #444;
+    white-space: nowrap;
+  }
+  .jl-title::before {
+    content: "—";
+    margin: 0 8px;
+    color: #aaa;
+    font-weight: 400;
   }
   .jl-contact {
     font-size: 0.9em;
@@ -323,7 +340,10 @@ export default function CVTemplateJobLeads({ data }) {
               : null
           }
           <div className="jl-header-info">
-            <div className="jl-name">{d.name || 'Prénom NOM'}</div>
+            <div className="jl-name-row">
+              <div className="jl-name">{d.name || 'Prénom NOM'}</div>
+              {d.title && <div className="jl-title">{d.title}</div>}
+            </div>
             <div className="jl-contact">
               {contactParts.map((part, i) => (
                 <React.Fragment key={i}>
