@@ -175,6 +175,20 @@ export const exportToDocx = async (cvData) => {
     );
   }
 
+  // Birth date / place / nationality, formatted like the templates.
+  const fmtBirth = (s) => {
+    if (!s) return '';
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    m = s.match(/^(\d{4})-(\d{2})$/);
+    if (m) return `${m[2]}/${m[1]}`;
+    return s;
+  };
+  const birthBits = [];
+  if (personalInfo.birthDate) birthBits.push(`Né(e) le ${fmtBirth(personalInfo.birthDate)}${personalInfo.birthPlace ? ` à ${personalInfo.birthPlace}` : ''}`);
+  else if (personalInfo.birthPlace) birthBits.push(`Né(e) à ${personalInfo.birthPlace}`);
+  if (personalInfo.nationality) birthBits.push(personalInfo.nationality);
+
   // Contact line
   const contactParts = [
     personalInfo.email,
@@ -182,6 +196,7 @@ export const exportToDocx = async (cvData) => {
     personalInfo.location,
     personalInfo.linkedin,
     personalInfo.website,
+    ...birthBits,
   ].filter(Boolean);
 
   if (contactParts.length > 0) {
@@ -264,20 +279,19 @@ export const exportToDocx = async (cvData) => {
       case 'skills': {
         if (!skills.length) return;
         children.push(sectionHeading(t('skills')));
-        const skillGroups = {};
-        skills.forEach(s => {
-          const level = s.level || 'Autre';
-          if (!skillGroups[level]) skillGroups[level] = [];
-          skillGroups[level].push(s.name);
-        });
-        Object.entries(skillGroups).forEach(([level, names]) => {
+        // One line per skill (faithful to the templates) — keeps grouped names
+        // like "Front-end : React, TypeScript…" intact instead of re-grouping.
+        skills.forEach((s) => {
+          const name = typeof s === 'string' ? s : s.name;
+          if (!name) return;
+          const level = (typeof s === 'object' && s.showLevel && s.level) ? s.level : '';
           children.push(
             new Paragraph({
               children: [
-                new TextRun({ text: `${level} : `, bold: true, size: halfPt(9), color: '374151' }),
-                new TextRun({ text: names.join(', '), size: halfPt(9), color: '4b5563' }),
+                new TextRun({ text: name, size: halfPt(9), color: '374151' }),
+                ...(level ? [new TextRun({ text: `  (${level})`, size: halfPt(8.5), color: '6b7280', italics: true })] : []),
               ],
-              spacing: { after: dxa(2) },
+              spacing: { after: dxa(1) },
             })
           );
         });

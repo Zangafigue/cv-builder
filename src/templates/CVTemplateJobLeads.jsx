@@ -283,12 +283,31 @@ export default function CVTemplateJobLeads({ data }) {
   const t = (key) => getTranslation(key, language);
   const d = data || defaultData;
 
+  const normalizeHref = (url) => /^https?:\/\//i.test(url) ? url : `https://${url}`;
+
   const contactParts = [
     d.address,
     d.phone && { text: d.phone, href: `tel:${d.phone}` },
     d.email && { text: d.email, href: `mailto:${d.email}` },
-    d.github && { text: 'GitHub', href: `https://${d.github}` },
+    d.linkedin && { text: d.linkedin, href: normalizeHref(d.linkedin) },
+    d.website && { text: d.website, href: normalizeHref(d.website) },
+    (!d.linkedin && !d.website && d.github) ? { text: d.github, href: normalizeHref(d.github) } : null,
   ].filter(Boolean);
+
+  // Birth date / place / nationality on a discreet second line.
+  const fmtBirth = (s) => {
+    if (!s) return '';
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+    m = s.match(/^(\d{4})-(\d{2})$/);
+    if (m) return `${m[2]}/${m[1]}`;
+    return s;
+  };
+  const birthBits = [];
+  if (d.birthdate) birthBits.push(`Né(e) le ${fmtBirth(d.birthdate)}${d.birthplace ? ` à ${d.birthplace}` : ''}`);
+  else if (d.birthplace) birthBits.push(`Né(e) à ${d.birthplace}`);
+  if (d.nationality) birthBits.push(d.nationality);
+  const birthLine = birthBits.join('  ·  ');
 
   return (
     <>
@@ -316,6 +335,7 @@ export default function CVTemplateJobLeads({ data }) {
                 </React.Fragment>
               ))}
             </div>
+            {birthLine && <div className="jl-contact" style={{ marginTop: '3px' }}>{birthLine}</div>}
           </div>
         </div>
 
