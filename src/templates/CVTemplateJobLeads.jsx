@@ -96,7 +96,7 @@ const css = `
     grid-template-columns: 112px 1fr;
     column-gap: 14px;
     border-bottom: 1px solid #d0d0d0;
-    padding: 6px 0;
+    padding: 5px 0;
   }
   .jl-section:last-child { border-bottom: none; }
 
@@ -120,7 +120,7 @@ const css = `
   }
 
   /* ── ENTRY ──────────────────────────────────── */
-  .jl-entry { margin-bottom: 7px; }
+  .jl-entry { margin-bottom: 6px; }
   .jl-entry:last-child { margin-bottom: 0; }
 
   .jl-entry-top {
@@ -192,7 +192,7 @@ const css = `
   .jl-langs {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
   }
   .jl-lang-row {
     display: flex;
@@ -221,7 +221,7 @@ const css = `
   .jl-certif-item {
     font-size: 0.95em;
     color: #333;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
     padding-left: 12px;
     position: relative;
   }
