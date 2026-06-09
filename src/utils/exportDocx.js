@@ -108,7 +108,8 @@ export const exportToDocx = async (cvData) => {
         certifications: "Certifications",
         projects: "Projets Réalisés",
         extracurricular: "Activités Extrascolaires & Bénévolat",
-        present: "Présent"
+        present: "Présent",
+        born: "Né(e)", bornDateSep: "le", bornPlaceSep: "à"
       },
       EN: {
         profile: "Profile Summary",
@@ -120,7 +121,8 @@ export const exportToDocx = async (cvData) => {
         certifications: "Certifications",
         projects: "Completed Projects",
         extracurricular: "Extracurricular Activities & Volunteering",
-        present: "Present"
+        present: "Present",
+        born: "Born", bornDateSep: "on", bornPlaceSep: "in"
       }
     };
     return dict[lang][key] || key;
@@ -185,8 +187,8 @@ export const exportToDocx = async (cvData) => {
     return s;
   };
   const birthBits = [];
-  if (personalInfo.birthDate) birthBits.push(`Né(e) le ${fmtBirth(personalInfo.birthDate)}${personalInfo.birthPlace ? ` à ${personalInfo.birthPlace}` : ''}`);
-  else if (personalInfo.birthPlace) birthBits.push(`Né(e) à ${personalInfo.birthPlace}`);
+  if (personalInfo.birthDate) birthBits.push(`${t('born')} ${t('bornDateSep')} ${fmtBirth(personalInfo.birthDate)}${personalInfo.birthPlace ? ` ${t('bornPlaceSep')} ${personalInfo.birthPlace}` : ''}`);
+  else if (personalInfo.birthPlace) birthBits.push(`${t('born')} ${t('bornPlaceSep')} ${personalInfo.birthPlace}`);
   if (personalInfo.nationality) birthBits.push(personalInfo.nationality);
 
   // Contact line

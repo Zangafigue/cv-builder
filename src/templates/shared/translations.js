@@ -9,7 +9,10 @@ export const translations = {
     certifications: "Certifications",
     projects: "Projets",
     extracurricular: "Activités Extrascolaires",
-    present: "Présent"
+    present: "Présent",
+    born: "Né(e)",
+    bornDateSep: "le",
+    bornPlaceSep: "à"
   },
   EN: {
     profile: "Profile Summary",
@@ -21,7 +24,10 @@ export const translations = {
     certifications: "Certifications",
     projects: "Projects",
     extracurricular: "Extracurricular Activities",
-    present: "Present"
+    present: "Present",
+    born: "Born",
+    bornDateSep: "on",
+    bornPlaceSep: "in"
   }
 };
 

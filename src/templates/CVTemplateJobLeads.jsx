@@ -302,16 +302,8 @@ export default function CVTemplateJobLeads({ data }) {
 
   const normalizeHref = (url) => /^https?:\/\//i.test(url) ? url : `https://${url}`;
 
-  const contactParts = [
-    d.address,
-    d.phone && { text: d.phone, href: `tel:${d.phone}` },
-    d.email && { text: d.email, href: `mailto:${d.email}` },
-    d.linkedin && { text: d.linkedin, href: normalizeHref(d.linkedin) },
-    d.github && { text: d.github, href: normalizeHref(d.github) },
-    d.website && { text: d.website, href: normalizeHref(d.website) },
-  ].filter(Boolean);
-
-  // Birth date / place / nationality on a discreet second line.
+  // Birth date / place / nationality, translated and flowed into the contact line
+  // (so it stays on the same row when there is room, instead of forcing a break).
   const fmtBirth = (s) => {
     if (!s) return '';
     let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -321,10 +313,19 @@ export default function CVTemplateJobLeads({ data }) {
     return s;
   };
   const birthBits = [];
-  if (d.birthdate) birthBits.push(`Né(e) le ${fmtBirth(d.birthdate)}${d.birthplace ? ` à ${d.birthplace}` : ''}`);
-  else if (d.birthplace) birthBits.push(`Né(e) à ${d.birthplace}`);
+  if (d.birthdate) birthBits.push(`${t('born')} ${t('bornDateSep')} ${fmtBirth(d.birthdate)}${d.birthplace ? ` ${t('bornPlaceSep')} ${d.birthplace}` : ''}`);
+  else if (d.birthplace) birthBits.push(`${t('born')} ${t('bornPlaceSep')} ${d.birthplace}`);
   if (d.nationality) birthBits.push(d.nationality);
-  const birthLine = birthBits.join('  ·  ');
+
+  const contactParts = [
+    d.address,
+    d.phone && { text: d.phone, href: `tel:${d.phone}` },
+    d.email && { text: d.email, href: `mailto:${d.email}` },
+    d.linkedin && { text: d.linkedin, href: normalizeHref(d.linkedin) },
+    d.github && { text: d.github, href: normalizeHref(d.github) },
+    d.website && { text: d.website, href: normalizeHref(d.website) },
+    ...birthBits,
+  ].filter(Boolean);
 
   return (
     <>
@@ -355,7 +356,6 @@ export default function CVTemplateJobLeads({ data }) {
                 </React.Fragment>
               ))}
             </div>
-            {birthLine && <div className="jl-contact" style={{ marginTop: '3px' }}>{birthLine}</div>}
           </div>
         </div>
 
