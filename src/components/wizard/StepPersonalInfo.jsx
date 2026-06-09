@@ -359,6 +359,7 @@ const StepPersonalInfo = () => {
             {field('linkedin', 'LinkedIn (optionnel)', 'url', 'linkedin.com/in/votre-profil')}
           </div>
           <div className="form-grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            {field('github', 'GitHub (optionnel)', 'url', 'github.com/votre-pseudo')}
             {field('website', 'Site web / Portfolio', 'url', 'monsite.com')}
           </div>
         </div>

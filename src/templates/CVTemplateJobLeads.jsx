@@ -307,8 +307,8 @@ export default function CVTemplateJobLeads({ data }) {
     d.phone && { text: d.phone, href: `tel:${d.phone}` },
     d.email && { text: d.email, href: `mailto:${d.email}` },
     d.linkedin && { text: d.linkedin, href: normalizeHref(d.linkedin) },
+    d.github && { text: d.github, href: normalizeHref(d.github) },
     d.website && { text: d.website, href: normalizeHref(d.website) },
-    (!d.linkedin && !d.website && d.github) ? { text: d.github, href: normalizeHref(d.github) } : null,
   ].filter(Boolean);
 
   // Birth date / place / nationality on a discreet second line.

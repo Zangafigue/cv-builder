@@ -77,7 +77,7 @@ export const mapCvDataToTemplate = (cvData, targetTemplate = '') => {
     photoSettings: personalInfo.photoSettings || { shape: 'round', filter: 'none' },
     linkedin: personalInfo.linkedin || '',
     website: personalInfo.website || '',
-    github: personalInfo.linkedin || personalInfo.website || '', // backward compat
+    github: personalInfo.github || '',
     summary: personalInfo.summary,
     
     // Add raw properties for backward/migrated templates compatibility

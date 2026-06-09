@@ -347,6 +347,7 @@ export default function CVTemplateBIT({ data }) {
     d.email,
     d.linkedin && (d.linkedin.startsWith('http') ? d.linkedin : `linkedin.com/in/${d.linkedin}`),
     d.github && `github.com/${d.github.replace('github.com/', '')}`,
+    d.website,
   ].filter(Boolean);
 
   return (

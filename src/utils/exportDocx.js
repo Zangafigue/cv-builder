@@ -195,6 +195,7 @@ export const exportToDocx = async (cvData) => {
     personalInfo.phone,
     personalInfo.location,
     personalInfo.linkedin,
+    personalInfo.github,
     personalInfo.website,
     ...birthBits,
   ].filter(Boolean);

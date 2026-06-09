@@ -11,6 +11,7 @@ export const initialCvData = {
     birthPlace: '',
     nationality: '',
     linkedin: '',
+    github: '',
     website: '',
     summary: '',
     photo: '', // Cropped/Final photo

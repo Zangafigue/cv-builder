@@ -205,7 +205,9 @@ export default function CVTemplateATS3({ data }) {
   const d = data || {};
   const contactParts = [
     d.phone, d.email, d.address,
+    d.linkedin && `LinkedIn : ${d.linkedin}`,
     d.github && `GitHub : ${d.github}`,
+    d.website,
     d.nationality,
   ].filter(Boolean);
 
