@@ -256,7 +256,7 @@ const FinalPage = () => {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--surface-50)' }}>
       {/* Header */}
-      <header style={{
+      <header className="final-header" style={{
         backgroundColor: 'white',
         borderBottom: '1px solid var(--border-color)',
         padding: '1rem 2rem',
@@ -271,7 +271,7 @@ const FinalPage = () => {
         <button onClick={() => navigate('wizard', 4)} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
           <ArrowLeft size={16} /> Retour à l'édition
         </button>
-        <div>
+        <div className="final-header-title">
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 700, color: 'var(--surface-800)', textAlign: 'center' }}>
             Finalisez votre CV
           </h1>
@@ -291,6 +291,7 @@ const FinalPage = () => {
         {/* CV Preview Center */}
         <div
           ref={previewRef}
+          className="final-preview-box"
           style={{
             display: 'flex',
             justifyContent: 'center',

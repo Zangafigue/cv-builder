@@ -262,5 +262,20 @@
     flex: 1;
     min-width: 140px;
   }
+
+  /* Header reflows: back button on row 1, action buttons full-width on row 2 */
+  .final-header {
+    flex-wrap: wrap !important;
+    row-gap: 0.5rem;
+    padding: 0.625rem 1rem !important;
+  }
+  .final-header-title {
+    display: none;
+  }
+
+  /* Give the scaled CV more room inside its frame on small screens */
+  .final-preview-box {
+    padding: 0.75rem !important;
+  }
 }
 
