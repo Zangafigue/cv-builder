@@ -102,6 +102,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ result: data });
   } catch (err) {
     console.error('Gemini proxy error:', err);
-    return res.status(502).json({ error: "Le service IA a échoué : " + (err?.message || 'erreur inconnue') });
+    const msg = err?.message || '';
+    if (/\b429\b|quota|rate.?limit|too many requests/i.test(msg)) {
+      return res.status(429).json({ error: "Quota IA atteint (palier gratuit). Réessayez dans quelques minutes, ou revenez demain." });
+    }
+    return res.status(502).json({ error: "Le service IA a échoué : " + (msg || 'erreur inconnue') });
   }
 }
