@@ -1,13 +1,15 @@
 // Thin client for the AI features. The Gemini API key lives server-side in the
 // /api/gemini serverless function — it is never shipped to the browser.
 
+import { getGeminiKey } from './aiKey';
+
 async function callGemini(payload) {
   let res;
   try {
     res = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, userApiKey: getGeminiKey() }),
     });
   } catch {
     throw new Error('Service IA injoignable. Vérifiez votre connexion.');

@@ -71,15 +71,23 @@ Retournez uniquement le JSON traduit valide. N'entourez pas la réponse de balis
 `;
 }
 
+// Best-effort per-IP rate limit for the SHARED server key only (per warm instance;
+// back it with Vercel KV / Upstash for robust cross-instance limiting).
+const RL_WINDOW_MS = 60_000;
+const RL_MAX = 6;
+const rlHits = new Map();
+function serverKeyRateLimited(ip) {
+  const now = Date.now();
+  const arr = (rlHits.get(ip) || []).filter((tm) => now - tm < RL_WINDOW_MS);
+  arr.push(now);
+  rlHits.set(ip, arr);
+  return arr.length > RL_MAX;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Méthode non autorisée.' });
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: 'Service IA non configuré (GEMINI_API_KEY manquante côté serveur).' });
   }
 
   // Vercel parses JSON bodies automatically, but guard against a raw string body.
@@ -87,7 +95,22 @@ export default async function handler(req, res) {
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { return res.status(400).json({ error: 'Corps de requête invalide.' }); }
   }
-  const { action, cvData, targetLang } = body || {};
+  body = body || {};
+  const { action, cvData, targetLang } = body;
+
+  // BYOK: use the visitor's own Gemini key when provided (their quota), else the
+  // shared server key (rate-limited). No key at all → ask them to add one.
+  const userApiKey = (typeof body.userApiKey === 'string' && body.userApiKey.trim()) ? body.userApiKey.trim() : '';
+  const apiKey = userApiKey || process.env.GEMINI_API_KEY || '';
+  if (!apiKey) {
+    return res.status(503).json({ error: "Service IA indisponible. Ajoutez votre propre clé Gemini (gratuite) dans les réglages pour activer la traduction." });
+  }
+  if (!userApiKey) {
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    if (serverKeyRateLimited(ip)) {
+      return res.status(429).json({ error: "Trop de requêtes IA. Patientez une minute, ou ajoutez votre propre clé Gemini (gratuite) pour ne plus être limité." });
+    }
+  }
 
   let prompt;
   if (action === 'analyze') prompt = buildAnalyzePrompt(cvData);

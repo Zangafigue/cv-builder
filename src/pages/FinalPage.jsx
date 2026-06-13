@@ -9,6 +9,7 @@ import Preview from '../components/Preview/Preview';
 import ScaledPreview from '../components/Preview/ScaledPreview';
 import { printCvDocument } from '../utils/printCv';
 import { shareApp } from '../utils/share';
+import { getGeminiKey, setGeminiKey } from '../utils/aiKey';
 import { translateCvData } from '../utils/geminiService';
 import { toast } from '../utils/toast';
 import {
@@ -144,6 +145,7 @@ const FinalPage = () => {
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedData, setTranslatedData] = useState(null); // non-null = preview in translated mode
+  const [aiKey, setAiKey] = useState(() => getGeminiKey()); // BYOK Gemini key
   const previewRef = useRef(null);
 
   // Drag & drop sensors for section reordering
@@ -342,6 +344,24 @@ const FinalPage = () => {
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '0.25rem' }}>
                 Traduisez automatiquement votre CV en anglais ou en français grâce à Gemini.
               </p>
+
+              {/* BYOK: optional personal Gemini key (uses the visitor's own free quota) */}
+              <div style={{ backgroundColor: 'var(--surface-50)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.625rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label htmlFor="gemini-key" style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--surface-700)' }}>Ta clé Gemini (optionnel, gratuite)</label>
+                <input
+                  id="gemini-key"
+                  type="password"
+                  value={aiKey}
+                  onChange={(e) => { setAiKey(e.target.value); setGeminiKey(e.target.value); }}
+                  placeholder="AIza…"
+                  autoComplete="off"
+                  style={{ width: '100%', padding: '0.4rem 0.6rem', fontSize: '0.8rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--surface-300)', backgroundColor: 'white' }}
+                />
+                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1.4, margin: 0 }}>
+                  Sans clé, la traduction partage un quota limité. Avec ta propre clé, tu utilises ton quota gratuit (stockée uniquement sur cet appareil).{' '}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-600)', fontWeight: 600 }}>Obtenir une clé →</a>
+                </p>
+              </div>
 
               {translatedData && (
                 <div style={{
