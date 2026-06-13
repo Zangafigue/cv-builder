@@ -3,11 +3,12 @@ import { useCv } from '../context/CvContext';
 import {
   Download, Printer, ArrowLeft, LayoutTemplate, Palette, Check,
   ChevronDown, ChevronUp, Type, FileJson, FileText, Languages,
-  Loader, GripVertical, Plus, Sparkles
+  Loader, GripVertical, Plus, Sparkles, Share2
 } from 'lucide-react';
 import Preview from '../components/Preview/Preview';
 import ScaledPreview from '../components/Preview/ScaledPreview';
 import { printCvDocument } from '../utils/printCv';
+import { shareApp } from '../utils/share';
 import { translateCvData } from '../utils/geminiService';
 import { toast } from '../utils/toast';
 import {
@@ -329,6 +330,11 @@ const FinalPage = () => {
               Le PDF s'ouvre via la boîte d'impression : choisissez « Enregistrer en PDF » comme destination. Le texte reste sélectionnable et lisible par les ATS.
             </p>
           </div>
+
+          {/* Share the platform */}
+          <button onClick={shareApp} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', gap: '0.5rem' }}>
+            <Share2 size={16} /> Partager la plateforme
+          </button>
 
           {/* Translation via Gemini */}
           <Panel title="Traduction IA (Gemini)" icon={<Languages size={16} />} defaultOpen={false}>

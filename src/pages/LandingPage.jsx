@@ -1,6 +1,7 @@
 import { useCv } from '../context/CvContext';
 import { initialCvData } from '../context/initialCvData';
-import { FilePlus, FileEdit, ArrowRight, Sparkles, Upload, Loader } from 'lucide-react';
+import { FilePlus, FileEdit, ArrowRight, Sparkles, Upload, Loader, Share2, MessageSquare } from 'lucide-react';
+import { shareApp, openFeedback } from '../utils/share';
 import { useRef, useState } from 'react';
 import { toast } from '../utils/toast';
 import { analyzeCvData } from '../utils/geminiService';
@@ -417,6 +418,22 @@ const LandingPage = () => {
             <div style={{ color: '#64748b', fontSize: '0.875rem' }}>{stat.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Share & feedback */}
+      <div style={{ marginTop: '2.5rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', zIndex: 1 }}>
+        <button
+          onClick={shareApp}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem', borderRadius: '99px', fontSize: '0.875rem', fontWeight: 600, color: 'white', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}
+        >
+          <Share2 size={16} /> Partager
+        </button>
+        <button
+          onClick={openFeedback}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem', borderRadius: '99px', fontSize: '0.875rem', fontWeight: 600, color: '#cbd5e1', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer' }}
+        >
+          <MessageSquare size={16} /> Donner mon avis
+        </button>
       </div>
 
       {/* Gemini Analysis Loading Overlay */}
