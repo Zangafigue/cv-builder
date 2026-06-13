@@ -4,14 +4,35 @@ import {
   Paragraph,
   TextRun,
   ImageRun,
-  HeadingLevel,
-  AlignmentType,
   BorderStyle,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  VerticalAlign,
 } from 'docx';
 import { saveAs } from 'file-saver';
+import { getTranslation } from '../templates/shared/translations';
 import { templateSupportsPhoto } from '../templates/templateMeta';
 
-// Decode a base64 data URL (data:image/...;base64,XXXX) into bytes for docx.
+// docx units: font sizes in half-points (1pt = 2); spacing/indent/margins in twips (1pt = 20).
+const halfPt = (n) => n * 2;
+const dxa = (n) => n * 20;
+
+// Colours mirroring the JobLeads template (sober black-on-white).
+const C = {
+  name: '111111',
+  title: '444444',
+  label: '111111',
+  body: '333333',
+  muted: '666666',
+  sep: 'd0d0d0',
+  rule: '1a1a1a',
+};
+
+const NONE = { style: BorderStyle.NONE };
+
+// Decode a base64 data URL into bytes for docx ImageRun.
 const dataUrlToUint8 = (dataUrl) => {
   const b64 = (dataUrl || '').split(',')[1] || '';
   const bin = atob(b64);
@@ -20,55 +41,6 @@ const dataUrlToUint8 = (dataUrl) => {
   return bytes;
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// docx library sizes/spacing/indents:
-// - TextRun/font size uses half-points (1 pt = 2)
-// - Spacing, margin, indent, and other measurements use twips / twentieths of a point (dxa) (1 pt = 20)
-const halfPt = (n) => n * 2;
-const dxa = (n) => n * 20;
-
-const sectionHeading = (text) =>
-  new Paragraph({
-    text: text.toUpperCase(),
-    heading: HeadingLevel.HEADING_2,
-    spacing: { before: dxa(8), after: dxa(2) },
-    border: {
-      bottom: { color: '3b82f6', space: 2, style: BorderStyle.SINGLE, size: 8 },
-    },
-    run: {
-      bold: true,
-      color: '1e293b',
-      size: halfPt(10),
-      allCaps: true,
-    },
-  });
-
-const bullet = (text) =>
-  new Paragraph({
-    text: `• ${text.replace(/^[-•·▸▪*►] ?/, '')}`,
-    spacing: { after: dxa(1) },
-    indent: { left: dxa(8) },
-    run: { size: halfPt(9), color: '374151' },
-  });
-
-const meta = (text) =>
-  new Paragraph({
-    children: [new TextRun({ text, size: halfPt(8.5), color: '6b7280', italics: true })],
-    spacing: { after: dxa(1) },
-  });
-
-const body = (text, opts = {}) =>
-  new Paragraph({
-    children: [new TextRun({ text, size: halfPt(9.5), color: '374151', ...opts })],
-    spacing: { after: dxa(2) },
-  });
-
-const empty = () => new Paragraph({
-  spacing: { before: 0, after: dxa(4) },
-  children: [new TextRun({ text: '', size: halfPt(1) })]
-});
-
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const [year, month] = dateStr.split('-');
@@ -76,7 +48,68 @@ const formatDate = (dateStr) => {
   return month ? `${months[parseInt(month, 10) - 1]} ${year}` : year;
 };
 
-// ─── Main export function ─────────────────────────────────────────────────────
+const fmtBirth = (s) => {
+  if (!s) return '';
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  m = s.match(/^(\d{4})-(\d{2})$/);
+  if (m) return `${m[2]}/${m[1]}`;
+  return s;
+};
+
+// ─── Content-cell paragraph helpers ────────────────────────────────────────────
+
+const bodyPara = (text) =>
+  new Paragraph({
+    children: [new TextRun({ text, size: halfPt(9.5), color: C.body })],
+    spacing: { after: dxa(1.5) },
+  });
+
+const bulletPara = (text) =>
+  new Paragraph({
+    children: [new TextRun({ text: `•  ${text.replace(/^[-•·▸▪*►] ?/, '')}`, size: halfPt(9.5), color: C.body })],
+    indent: { left: dxa(10), hanging: dxa(10) },
+    spacing: { after: dxa(1) },
+  });
+
+const entryHead = ({ title, sub, date }) =>
+  new Paragraph({
+    children: [
+      new TextRun({ text: title || '', bold: true, size: halfPt(10), color: C.name }),
+      sub ? new TextRun({ text: `   ${sub}`, size: halfPt(9.5), color: C.name }) : null,
+      date ? new TextRun({ text: `   (${date})`, size: halfPt(8.5), color: C.muted, italics: true }) : null,
+    ].filter(Boolean),
+    spacing: { before: dxa(2), after: dxa(0.5) },
+  });
+
+// ─── Section table (LABEL | content), mirroring the JobLeads grid ──────────────
+
+const LABEL_W = 2100;
+const CONTENT_W = 8366;
+
+const sectionRow = (label, paras) =>
+  new TableRow({
+    children: [
+      new TableCell({
+        width: { size: LABEL_W, type: WidthType.DXA },
+        margins: { top: dxa(4), bottom: dxa(4), right: dxa(10) },
+        verticalAlign: VerticalAlign.TOP,
+        children: [
+          new Paragraph({
+            children: [new TextRun({ text: (label || '').toUpperCase(), bold: true, size: halfPt(8.5), color: C.label })],
+          }),
+        ],
+      }),
+      new TableCell({
+        width: { size: CONTENT_W, type: WidthType.DXA },
+        margins: { top: dxa(4), bottom: dxa(4), left: dxa(4) },
+        verticalAlign: VerticalAlign.TOP,
+        children: paras.length ? paras : [new Paragraph({ children: [new TextRun({ text: '' })] })],
+      }),
+    ],
+  });
+
+// ─── Main export function ───────────────────────────────────────────────────────
 
 export const exportToDocx = async (cvData) => {
   const {
@@ -95,322 +128,176 @@ export const exportToDocx = async (cvData) => {
     template = '',
   } = cvData;
 
-  const lang = (language === 'EN' || language === 'en') ? 'EN' : 'FR';
-  const t = (key) => {
-    const dict = {
-      FR: {
-        profile: "Profil",
-        experience: "Expérience Professionnelle",
-        education: "Formation",
-        skills: "Compétences",
-        languages: "Langues",
-        interests: "Centres d'intérêt",
-        certifications: "Certifications",
-        projects: "Projets Réalisés",
-        extracurricular: "Activités Extrascolaires & Bénévolat",
-        present: "Présent",
-        born: "Né(e)", bornDateSep: "le", bornPlaceSep: "à"
-      },
-      EN: {
-        profile: "Profile Summary",
-        experience: "Professional Experience",
-        education: "Education",
-        skills: "Skills",
-        languages: "Languages",
-        interests: "Interests & Hobbies",
-        certifications: "Certifications",
-        projects: "Completed Projects",
-        extracurricular: "Extracurricular Activities & Volunteering",
-        present: "Present",
-        born: "Born", bornDateSep: "on", bornPlaceSep: "in"
-      }
-    };
-    return dict[lang][key] || key;
-  };
+  // Same labels as the on-screen templates, so the Word doc matches the view.
+  const t = (key) => getTranslation(key, language);
 
-  const children = [];
-
-  // ── PHOTO (only if the template supports it and one is set) ──────────────────
-  if (personalInfo.photo && templateSupportsPhoto(template)) {
-    try {
-      children.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { after: dxa(3) },
-          children: [
-            new ImageRun({
-              type: 'jpg',
-              data: dataUrlToUint8(personalInfo.photo),
-              transformation: { width: 90, height: 90 },
-            }),
-          ],
-        })
-      );
-    } catch (e) {
-      console.warn('Could not embed photo in DOCX:', e);
-    }
-  }
-
-  // ── HEADER ─────────────────────────────────────────────────────────────────
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: personalInfo.fullName || 'Votre Nom',
-          bold: true,
-          size: halfPt(18),
-          color: '111827',
-        }),
-      ],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: dxa(2) },
-    })
-  );
-
-  if (personalInfo.jobTitle) {
-    children.push(
-      new Paragraph({
-        children: [new TextRun({ text: personalInfo.jobTitle, size: halfPt(11), color: '3b82f6', bold: true })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: dxa(3) },
-      })
-    );
-  }
-
-  // Birth date / place / nationality, formatted like the templates.
-  const fmtBirth = (s) => {
-    if (!s) return '';
-    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-    m = s.match(/^(\d{4})-(\d{2})$/);
-    if (m) return `${m[2]}/${m[1]}`;
-    return s;
-  };
+  // ── Birth date / place / nationality (translated) ──────────────────────────
   const birthBits = [];
   if (personalInfo.birthDate) birthBits.push(`${t('born')} ${t('bornDateSep')} ${fmtBirth(personalInfo.birthDate)}${personalInfo.birthPlace ? ` ${t('bornPlaceSep')} ${personalInfo.birthPlace}` : ''}`);
   else if (personalInfo.birthPlace) birthBits.push(`${t('born')} ${t('bornPlaceSep')} ${personalInfo.birthPlace}`);
   if (personalInfo.nationality) birthBits.push(personalInfo.nationality);
 
-  // Contact line
+  // ── Header: name — title, then contact line ────────────────────────────────
+  const nameRuns = [new TextRun({ text: personalInfo.fullName || 'Votre Nom', bold: true, size: halfPt(17), color: C.name })];
+  if (personalInfo.jobTitle) nameRuns.push(new TextRun({ text: `   —   ${personalInfo.jobTitle}`, size: halfPt(11), color: C.title }));
+  const namePara = new Paragraph({ children: nameRuns, spacing: { after: dxa(1.5) } });
+
   const contactParts = [
-    personalInfo.email,
     personalInfo.phone,
+    personalInfo.email,
     personalInfo.location,
     personalInfo.linkedin,
     personalInfo.github,
     personalInfo.website,
     ...birthBits,
   ].filter(Boolean);
+  const contactPara = new Paragraph({
+    children: [new TextRun({ text: contactParts.join('   ·   '), size: halfPt(8.5), color: C.muted })],
+    spacing: { after: dxa(3) },
+  });
 
-  if (contactParts.length > 0) {
+  const children = [];
+
+  // Photo (left of name) when the template supports it and one is set.
+  let photoPara = null;
+  if (personalInfo.photo && templateSupportsPhoto(template)) {
+    try {
+      photoPara = new Paragraph({
+        children: [new ImageRun({ type: 'jpg', data: dataUrlToUint8(personalInfo.photo), transformation: { width: 64, height: 64 } })],
+      });
+    } catch (e) {
+      console.warn('Could not embed photo in DOCX:', e);
+    }
+  }
+
+  if (photoPara) {
     children.push(
-      new Paragraph({
-        children: [new TextRun({ text: contactParts.join('  |  '), size: halfPt(8.5), color: '6b7280' })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: dxa(6) },
+      new Table({
+        width: { size: 10466, type: WidthType.DXA },
+        columnWidths: [1100, 9366],
+        borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideVertical: NONE, insideHorizontal: NONE },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({ width: { size: 1100, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, children: [photoPara] }),
+              new TableCell({ width: { size: 9366, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, children: [namePara, contactPara] }),
+            ],
+          }),
+        ],
+      })
+    );
+  } else {
+    children.push(namePara, contactPara);
+  }
+
+  // Full-width rule under the header (like JobLeads' header border).
+  children.push(
+    new Paragraph({
+      spacing: { after: dxa(4) },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: C.rule } },
+      children: [new TextRun({ text: '', size: halfPt(1) })],
+    })
+  );
+
+  // ── Section content builders (return arrays of paragraphs) ─────────────────
+  const buildContent = (id) => {
+    switch (id) {
+      case 'experience':
+        return experience.flatMap((exp) => {
+          const date = [formatDate(exp.startDate), exp.current ? t('present') : formatDate(exp.endDate)].filter(Boolean).join(' – ');
+          return [
+            entryHead({ title: exp.position, sub: exp.company, date }),
+            ...(exp.description || '').split('\n').filter((l) => l.trim()).map(bulletPara),
+          ];
+        });
+      case 'education':
+        return education.flatMap((edu) => {
+          const date = [formatDate(edu.startDate), edu.current ? t('present') : formatDate(edu.endDate)].filter(Boolean).join(' – ');
+          const degree = [edu.degree, edu.field].filter(Boolean).join(' — ');
+          const out = [entryHead({ title: degree, sub: edu.school, date })];
+          if (edu.description) out.push(bodyPara(edu.description));
+          return out;
+        });
+      case 'projects':
+        return projects.flatMap((proj) => {
+          const bullets = Array.isArray(proj.bullets) && proj.bullets.length
+            ? proj.bullets
+            : (proj.description || '').split('\n').filter((l) => l.trim());
+          return [entryHead({ title: proj.title, sub: proj.type }), ...bullets.map(bulletPara)];
+        });
+      case 'skills':
+        return skills
+          .map((s) => ({ name: typeof s === 'string' ? s : s.name, level: (typeof s === 'object' && s.showLevel && s.level) ? s.level : '' }))
+          .filter((s) => s.name)
+          .map((s) => new Paragraph({
+            children: [
+              new TextRun({ text: s.name, size: halfPt(9.5), color: C.body }),
+              ...(s.level ? [new TextRun({ text: `  (${s.level})`, size: halfPt(8.5), color: C.muted, italics: true })] : []),
+            ],
+            spacing: { after: dxa(1) },
+          }));
+      case 'languages':
+        return languages.map((l) => {
+          const name = typeof l === 'string' ? l : l.name;
+          const level = (typeof l === 'object' && l.level) ? l.level : '';
+          return bodyPara(level ? `${name} (${level})` : name);
+        });
+      case 'certifications':
+        return certifications.map((c) => bulletPara([c.name, c.date && `— ${c.date}`, c.org && `· ${c.org}`].filter(Boolean).join(' ')));
+      case 'extracurricular':
+        return extracurricular
+          .map((item) => (typeof item === 'string' ? item : (item.name || '')))
+          .filter(Boolean)
+          .map(bulletPara);
+      case 'interests':
+        return [bodyPara(interests.map((i) => (typeof i === 'string' ? i : i.name)).filter(Boolean).join('  ·  '))];
+      default:
+        return [];
+    }
+  };
+
+  // ── Assemble section rows in the user-defined order ────────────────────────
+  const rows = [];
+  if (personalInfo.summary) rows.push(sectionRow(t('profile'), [bodyPara(personalInfo.summary)]));
+
+  const allSectionIds = ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests'];
+  const orderedSections = [
+    ...sectionsOrder.filter((id) => allSectionIds.includes(id)),
+    ...allSectionIds.filter((id) => !sectionsOrder.includes(id)),
+  ];
+  orderedSections.forEach((id) => {
+    const content = buildContent(id);
+    if (content.length) rows.push(sectionRow(t(id), content));
+  });
+  customSections.forEach((cs) => {
+    if (!cs.name) return;
+    const content = (cs.content || '').split('\n').filter((l) => l.trim()).map(bodyPara);
+    if (content.length) rows.push(sectionRow(cs.name, content));
+  });
+
+  if (rows.length) {
+    children.push(
+      new Table({
+        width: { size: LABEL_W + CONTENT_W, type: WidthType.DXA },
+        columnWidths: [LABEL_W, CONTENT_W],
+        borders: {
+          top: NONE, bottom: NONE, left: NONE, right: NONE,
+          insideVertical: NONE,
+          insideHorizontal: { style: BorderStyle.SINGLE, size: 4, color: C.sep },
+        },
+        rows,
       })
     );
   }
 
-  // ── PROFIL ─────────────────────────────────────────────────────────────────
-  if (personalInfo.summary) {
-    children.push(sectionHeading(t('profile')));
-    children.push(body(personalInfo.summary));
-    children.push(empty());
-  }
-
-  // ── SECTION BUILDER ────────────────────────────────────────────────────────
-
-  const buildSection = (sectionId) => {
-    switch (sectionId) {
-      case 'experience':
-        if (!experience.length) return;
-        children.push(sectionHeading(t('experience')));
-        experience.forEach((exp) => {
-          const dateRange = [
-            formatDate(exp.startDate),
-            exp.current ? t('present') : formatDate(exp.endDate),
-          ].filter(Boolean).join(' – ');
-
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: exp.position || '', bold: true, size: halfPt(9.5), color: '111827' }),
-                new TextRun({ text: exp.company ? `  —  ${exp.company}` : '', size: halfPt(9), color: '3b82f6' }),
-                new TextRun({ text: dateRange ? `   (${dateRange})` : '', size: halfPt(8.5), color: '6b7280', italics: true }),
-              ],
-              spacing: { before: dxa(4), after: dxa(1) },
-            })
-          );
-
-          if (exp.description) {
-            exp.description.split('\n').filter(l => l.trim()).forEach(line => {
-              children.push(bullet(line));
-            });
-          }
-        });
-        children.push(empty());
-        break;
-
-      case 'education':
-        if (!education.length) return;
-        children.push(sectionHeading(t('education')));
-        education.forEach((edu) => {
-          const dateRange = [
-            formatDate(edu.startDate),
-            edu.current ? t('present') : formatDate(edu.endDate),
-          ].filter(Boolean).join(' – ');
-
-          const degreeText = [edu.degree, edu.field].filter(Boolean).join(' — ');
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: degreeText || '', bold: true, size: halfPt(9.5), color: '111827' }),
-                new TextRun({ text: edu.school ? `   |   ${edu.school}` : '', size: halfPt(9), color: '3b82f6' }),
-                new TextRun({ text: dateRange ? `   (${dateRange})` : '', size: halfPt(8.5), color: '6b7280', italics: true }),
-              ],
-              spacing: { before: dxa(4), after: dxa(1) },
-            })
-          );
-          if (edu.description) {
-            children.push(meta(edu.description));
-          }
-        });
-        children.push(empty());
-        break;
-
-      case 'skills': {
-        if (!skills.length) return;
-        children.push(sectionHeading(t('skills')));
-        // One line per skill (faithful to the templates) — keeps grouped names
-        // like "Front-end : React, TypeScript…" intact instead of re-grouping.
-        skills.forEach((s) => {
-          const name = typeof s === 'string' ? s : s.name;
-          if (!name) return;
-          const level = (typeof s === 'object' && s.showLevel && s.level) ? s.level : '';
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: name, size: halfPt(9), color: '374151' }),
-                ...(level ? [new TextRun({ text: `  (${level})`, size: halfPt(8.5), color: '6b7280', italics: true })] : []),
-              ],
-              spacing: { after: dxa(1) },
-            })
-          );
-        });
-        children.push(empty());
-        break;
-      }
-
-      case 'languages': {
-        if (!languages.length) return;
-        children.push(sectionHeading(t('languages')));
-        const langParts = languages.map(lang => {
-          const name = typeof lang === 'string' ? lang : lang.name;
-          const level = typeof lang === 'object' && lang.level ? lang.level : '';
-          return level ? `${name} (${level})` : name;
-        }).filter(Boolean).join('   ·   ');
-        children.push(body(langParts));
-        children.push(empty());
-        break;
-      }
-
-      case 'projects':
-        if (!projects.length) return;
-        children.push(sectionHeading(t('projects')));
-        projects.forEach((proj) => {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({ text: proj.title || '', bold: true, size: halfPt(9.5), color: '111827' }),
-                new TextRun({ text: proj.type ? `  —  ${proj.type}` : '', size: halfPt(9), color: '3b82f6' }),
-              ],
-              spacing: { before: dxa(4), after: dxa(1) },
-            })
-          );
-          const bullets = Array.isArray(proj.bullets) && proj.bullets.length > 0
-            ? proj.bullets
-            : (proj.description || '').split('\n').filter(l => l.trim());
-          bullets.forEach(b => children.push(bullet(b)));
-        });
-        children.push(empty());
-        break;
-
-      case 'extracurricular':
-        if (!extracurricular.length) return;
-        children.push(sectionHeading(t('extracurricular')));
-        extracurricular.forEach((item) => {
-          const text = typeof item === 'string' ? item : (item.name || '');
-          if (text) children.push(bullet(text));
-        });
-        children.push(empty());
-        break;
-
-      case 'certifications': {
-        if (!certifications.length) return;
-        children.push(sectionHeading(t('certifications')));
-        const certParts = certifications.map((c) => {
-          return [c.name, c.org, c.date ? `(${c.date})` : ''].filter(Boolean).join(' · ');
-        }).join('   ·   ');
-        children.push(body(certParts));
-        children.push(empty());
-        break;
-      }
-
-      case 'interests':
-        if (!interests.length) return;
-        children.push(sectionHeading(t('interests')));
-        children.push(
-          body(interests.map(i => (typeof i === 'string' ? i : i.name)).filter(Boolean).join('   ·   '))
-        );
-        children.push(empty());
-        break;
-
-      default:
-        break;
-    }
-  };
-
-  // Ordered sections
-  const allSectionIds = [
-    'experience', 'education', 'skills', 'languages',
-    'projects', 'extracurricular', 'certifications', 'interests',
-  ];
-  const orderedSections = [
-    ...sectionsOrder.filter(id => allSectionIds.includes(id)),
-    ...allSectionIds.filter(id => !sectionsOrder.includes(id)),
-  ];
-
-  orderedSections.forEach(buildSection);
-
-  // Custom sections
-  customSections.forEach((cs) => {
-    if (!cs.name) return;
-    children.push(sectionHeading(cs.name));
-    (cs.content || '').split('\n').filter(l => l.trim()).forEach(line => {
-      children.push(body(line));
-    });
-    children.push(empty());
-  });
-
-  // ── GENERATE DOC ───────────────────────────────────────────────────────────
+  // ── Generate document ──────────────────────────────────────────────────────
   const doc = new Document({
     styles: {
-      paragraphStyles: [
-        {
-          id: 'Normal',
-          name: 'Normal',
-          run: { font: 'Calibri', size: halfPt(9.5) },
-        },
-      ],
+      paragraphStyles: [{ id: 'Normal', name: 'Normal', run: { font: 'Calibri', size: halfPt(9.5) } }],
     },
     sections: [
       {
-        properties: {
-          page: {
-            margin: { top: dxa(36), right: dxa(36), bottom: dxa(36), left: dxa(36) },
-          },
-        },
+        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: dxa(36), right: dxa(36), bottom: dxa(36), left: dxa(36) } } },
         children,
       },
     ],
