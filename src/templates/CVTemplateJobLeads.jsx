@@ -42,18 +42,6 @@ const css = `
     object-fit: cover;
     flex-shrink: 0;
   }
-  .jl-photo-placeholder {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    background: #e0e0e0;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    color: #bbb;
-  }
   .jl-header-info { flex: 1; }
   .jl-name-row {
     display: flex;
@@ -334,12 +322,9 @@ export default function CVTemplateJobLeads({ data }) {
 
         {/* ── HEADER ── */}
         <div className="jl-header">
-          {d.photo
-            ? <img className="jl-photo" src={d.photo} alt="Photo" />
-            : d.showPhotoPlaceholder !== false
-              ? <div className="jl-photo-placeholder">👤</div>
-              : null
-          }
+          {/* The photo is optional — many international CVs omit it. When absent,
+              render nothing so no space is reserved for it. */}
+          {d.photo && <img className="jl-photo" src={d.photo} alt="Photo" />}
           <div className="jl-header-info">
             <div className="jl-name-row">
               <div className="jl-name">{d.name || 'Prénom NOM'}</div>
@@ -495,7 +480,6 @@ const defaultData = {
   email: "jean.dupont@email.com",
   github: "github.com/jeandupont",
   photo: null,
-  showPhotoPlaceholder: true,
 
   summary:
     "Développeur passionné avec 5 ans d'expérience dans la création d'applications web scalables. " +
