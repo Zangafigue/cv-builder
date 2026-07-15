@@ -78,6 +78,12 @@ const css = `
   }
   .jl-contact-sep { color: #bbb; margin: 0 2px; }
 
+  /* Without a photo the info block spans the full width — center it so the
+     header stays balanced instead of hugging the left edge. */
+  .jl-header--no-photo .jl-header-info { text-align: center; }
+  .jl-header--no-photo .jl-name-row,
+  .jl-header--no-photo .jl-contact { justify-content: center; }
+
   /* ── SECTION ────────────────────────────────── */
   .jl-section {
     display: grid;
@@ -321,7 +327,7 @@ export default function CVTemplateJobLeads({ data }) {
       <div className="jl-cv cv-document">
 
         {/* ── HEADER ── */}
-        <div className="jl-header">
+        <div className={`jl-header${d.photo ? '' : ' jl-header--no-photo'}`}>
           {/* The photo is optional — many international CVs omit it. When absent,
               render nothing so no space is reserved for it. */}
           {d.photo && <img className="jl-photo" src={d.photo} alt="Photo" />}
