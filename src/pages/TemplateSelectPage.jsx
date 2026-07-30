@@ -106,13 +106,15 @@ const TemplateSelectPage = () => {
   const { cvData, navigate, updateTemplateSettings } = useCv();
   const [selectedTemplate, setSelectedTemplate] = useState(cvData.template);
   const [selectedColor, setSelectedColor] = useState(cvData.themeColor);
+  const [selectedLanguage, setSelectedLanguage] = useState(cvData.language || 'FR');
   const [isConfirming, setIsConfirming] = useState(false);
 
   const handleConfirm = () => {
     setIsConfirming(true);
     updateTemplateSettings('template', selectedTemplate);
     updateTemplateSettings('themeColor', selectedColor);
-    
+    updateTemplateSettings('language', selectedLanguage);
+
     // Tiny delay for visual feedback
     setTimeout(() => {
       navigate('wizard', 0);
@@ -161,6 +163,31 @@ const TemplateSelectPage = () => {
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '1.0625rem' }}>
             Vous pourrez toujours en changer plus tard depuis l'éditeur.
+          </p>
+        </div>
+
+        {/* CV language */}
+        <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Langue du CV
+          </p>
+          <div style={{ display: 'inline-flex', border: '1px solid var(--surface-300)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            {[['FR', 'Français'], ['EN', 'English']].map(([code, label]) => (
+              <button
+                key={code}
+                onClick={() => setSelectedLanguage(code)}
+                style={{
+                  padding: '0.5rem 1.5rem', fontSize: '0.875rem', fontWeight: 600, border: 'none', cursor: 'pointer',
+                  backgroundColor: selectedLanguage === code ? 'var(--primary-600)' : 'white',
+                  color: selectedLanguage === code ? 'white' : 'var(--text-muted)',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.625rem' }}>
+            Détermine la langue des titres de section (Profil/Profile…). Vous rédigez votre contenu dans cette langue.
           </p>
         </div>
 

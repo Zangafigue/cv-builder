@@ -41,7 +41,7 @@ const SECTION_MAP = {
 };
 
 const WizardPage = () => {
-  const { cvData, currentStep, nextStep, prevStep, navigate } = useCv();
+  const { cvData, currentStep, nextStep, prevStep, navigate, updateTemplateSettings } = useCv();
   const [showPreviewMobile, setShowPreviewMobile] = useState(false);
 
   const dynamicSteps = cvData.sectionsOrder
@@ -134,6 +134,24 @@ const WizardPage = () => {
             </button>
           ))}
         </nav>
+
+        {/* CV language toggle (applies live to the rendered CV) */}
+        <div style={{ display: 'inline-flex', border: '1px solid var(--border-color)', borderRadius: '99px', overflow: 'hidden', flexShrink: 0 }}>
+          {['FR', 'EN'].map(code => (
+            <button
+              key={code}
+              onClick={() => updateTemplateSettings('language', code)}
+              title={code === 'FR' ? 'Titres du CV en français' : 'Titres du CV en anglais'}
+              style={{
+                padding: '0.3rem 0.7rem', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer',
+                backgroundColor: (cvData.language || 'FR') === code ? 'var(--primary-600)' : 'transparent',
+                color: (cvData.language || 'FR') === code ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              {code}
+            </button>
+          ))}
+        </div>
 
         {/* Progress text */}
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>

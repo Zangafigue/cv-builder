@@ -36,6 +36,7 @@ export const initialCvData = {
   sectionsOrder: ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests', 'customSections'],
   template: 'modern',
   themeColor: '#3b82f6',
+  language: 'FR', // CV output language (section labels, date wording): 'FR' | 'EN'
   typography: {
     fontFamily: 'Inter',
     fontSize: 'medium',
