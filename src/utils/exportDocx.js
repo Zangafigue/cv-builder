@@ -5,11 +5,7 @@ import {
   TextRun,
   ImageRun,
   BorderStyle,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType,
-  VerticalAlign,
+  AlignmentType,
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { getTranslation } from '../templates/shared/translations';
@@ -19,18 +15,15 @@ import { templateSupportsPhoto } from '../templates/templateMeta';
 const halfPt = (n) => n * 2;
 const dxa = (n) => n * 20;
 
-// Colours mirroring the JobLeads template (sober black-on-white).
+// Sober academic/BIT palette (black-on-white); section accents use the theme color.
 const C = {
   name: '111111',
   title: '444444',
-  label: '111111',
   body: '333333',
   muted: '666666',
-  sep: 'd0d0d0',
-  rule: '1a1a1a',
 };
 
-const NONE = { style: BorderStyle.NONE };
+const DEFAULT_ACCENT = '2563eb';
 
 // Decode a base64 data URL into bytes for docx ImageRun.
 const dataUrlToUint8 = (dataUrl) => {
@@ -57,7 +50,7 @@ const fmtBirth = (s) => {
   return s;
 };
 
-// ─── Content-cell paragraph helpers ────────────────────────────────────────────
+// ─── Content paragraph helpers ─────────────────────────────────────────────────
 
 const bodyPara = (text) =>
   new Paragraph({
@@ -79,35 +72,18 @@ const entryHead = ({ title, sub, date }) =>
       sub ? new TextRun({ text: `   ${sub}`, size: halfPt(9.5), color: C.name }) : null,
       date ? new TextRun({ text: `   (${date})`, size: halfPt(8.5), color: C.muted, italics: true }) : null,
     ].filter(Boolean),
-    spacing: { before: dxa(2), after: dxa(0.5) },
+    spacing: { before: dxa(3), after: dxa(0.5) },
   });
 
-// ─── Section table (LABEL | content), mirroring the JobLeads grid ──────────────
-
-const LABEL_W = 2100;
-const CONTENT_W = 8366;
-
-const sectionRow = (label, paras) =>
-  new TableRow({
-    children: [
-      new TableCell({
-        width: { size: LABEL_W, type: WidthType.DXA },
-        margins: { top: dxa(4), bottom: dxa(4), right: dxa(10) },
-        verticalAlign: VerticalAlign.TOP,
-        children: [
-          new Paragraph({
-            children: [new TextRun({ text: (label || '').toUpperCase(), bold: true, size: halfPt(8.5), color: C.label })],
-          }),
-        ],
-      }),
-      new TableCell({
-        width: { size: CONTENT_W, type: WidthType.DXA },
-        margins: { top: dxa(4), bottom: dxa(4), left: dxa(4) },
-        verticalAlign: VerticalAlign.TOP,
-        children: paras.length ? paras : [new Paragraph({ children: [new TextRun({ text: '' })] })],
-      }),
-    ],
-  });
+// Full-width section heading (uppercase, theme-colored, underlined) + its content.
+const sectionBlock = (accent, label, paras) => [
+  new Paragraph({
+    children: [new TextRun({ text: (label || '').toUpperCase(), bold: true, size: halfPt(10.5), color: accent })],
+    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: accent } },
+    spacing: { before: dxa(8), after: dxa(3) },
+  }),
+  ...paras,
+];
 
 // ─── Main export function ───────────────────────────────────────────────────────
 
@@ -126,21 +102,47 @@ export const exportToDocx = async (cvData) => {
     sectionsOrder = [],
     language = 'FR',
     template = '',
+    themeColor = '',
   } = cvData;
 
+  const accent = (themeColor || '').replace('#', '') || DEFAULT_ACCENT;
   // Same labels as the on-screen templates, so the Word doc matches the view.
   const t = (key) => getTranslation(key, language);
 
-  // ── Birth date / place / nationality (translated) ──────────────────────────
+  // ── Birth date / place / nationality (translated, optional) ─────────────────
   const birthBits = [];
   if (personalInfo.birthDate) birthBits.push(`${t('born')} ${t('bornDateSep')} ${fmtBirth(personalInfo.birthDate)}${personalInfo.birthPlace ? ` ${t('bornPlaceSep')} ${personalInfo.birthPlace}` : ''}`);
   else if (personalInfo.birthPlace) birthBits.push(`${t('born')} ${t('bornPlaceSep')} ${personalInfo.birthPlace}`);
   if (personalInfo.nationality) birthBits.push(personalInfo.nationality);
 
-  // ── Header: name — title, then contact line ────────────────────────────────
-  const nameRuns = [new TextRun({ text: personalInfo.fullName || 'Votre Nom', bold: true, size: halfPt(17), color: C.name })];
-  if (personalInfo.jobTitle) nameRuns.push(new TextRun({ text: `   —   ${personalInfo.jobTitle}`, size: halfPt(11), color: C.title }));
-  const namePara = new Paragraph({ children: nameRuns, spacing: { after: dxa(1.5) } });
+  // ── Header: centered photo (optional) + name + title + contact line ─────────
+  const children = [];
+
+  if (personalInfo.photo && templateSupportsPhoto(template)) {
+    try {
+      children.push(new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: dxa(3) },
+        children: [new ImageRun({ type: 'jpg', data: dataUrlToUint8(personalInfo.photo), transformation: { width: 72, height: 72 } })],
+      }));
+    } catch (e) {
+      console.warn('Could not embed photo in DOCX:', e);
+    }
+  }
+
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: personalInfo.jobTitle ? dxa(0.5) : dxa(2) },
+    children: [new TextRun({ text: personalInfo.fullName || 'Votre Nom', bold: true, size: halfPt(18), color: C.name })],
+  }));
+
+  if (personalInfo.jobTitle) {
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: dxa(2) },
+      children: [new TextRun({ text: personalInfo.jobTitle, size: halfPt(11), color: C.title })],
+    }));
+  }
 
   const contactParts = [
     personalInfo.phone,
@@ -151,53 +153,13 @@ export const exportToDocx = async (cvData) => {
     personalInfo.website,
     ...birthBits,
   ].filter(Boolean);
-  const contactPara = new Paragraph({
-    children: [new TextRun({ text: contactParts.join('   ·   '), size: halfPt(8.5), color: C.muted })],
-    spacing: { after: dxa(3) },
-  });
-
-  const children = [];
-
-  // Photo (left of name) when the template supports it and one is set.
-  let photoPara = null;
-  if (personalInfo.photo && templateSupportsPhoto(template)) {
-    try {
-      photoPara = new Paragraph({
-        children: [new ImageRun({ type: 'jpg', data: dataUrlToUint8(personalInfo.photo), transformation: { width: 64, height: 64 } })],
-      });
-    } catch (e) {
-      console.warn('Could not embed photo in DOCX:', e);
-    }
+  if (contactParts.length) {
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: dxa(6) },
+      children: [new TextRun({ text: contactParts.join('   ·   '), size: halfPt(9), color: C.muted })],
+    }));
   }
-
-  if (photoPara) {
-    children.push(
-      new Table({
-        width: { size: 10466, type: WidthType.DXA },
-        columnWidths: [1100, 9366],
-        borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideVertical: NONE, insideHorizontal: NONE },
-        rows: [
-          new TableRow({
-            children: [
-              new TableCell({ width: { size: 1100, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, children: [photoPara] }),
-              new TableCell({ width: { size: 9366, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, children: [namePara, contactPara] }),
-            ],
-          }),
-        ],
-      })
-    );
-  } else {
-    children.push(namePara, contactPara);
-  }
-
-  // Full-width rule under the header (like JobLeads' header border).
-  children.push(
-    new Paragraph({
-      spacing: { after: dxa(4) },
-      border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: C.rule } },
-      children: [new TextRun({ text: '', size: halfPt(1) })],
-    })
-  );
 
   // ── Section content builders (return arrays of paragraphs) ─────────────────
   const buildContent = (id) => {
@@ -256,9 +218,8 @@ export const exportToDocx = async (cvData) => {
     }
   };
 
-  // ── Assemble section rows in the user-defined order ────────────────────────
-  const rows = [];
-  if (personalInfo.summary) rows.push(sectionRow(t('profile'), [bodyPara(personalInfo.summary)]));
+  // ── Sections, in the user-defined order (full-width headings) ──────────────
+  if (personalInfo.summary) children.push(...sectionBlock(accent, t('profile'), [bodyPara(personalInfo.summary)]));
 
   const allSectionIds = ['experience', 'education', 'skills', 'languages', 'projects', 'extracurricular', 'certifications', 'interests'];
   const orderedSections = [
@@ -267,28 +228,13 @@ export const exportToDocx = async (cvData) => {
   ];
   orderedSections.forEach((id) => {
     const content = buildContent(id);
-    if (content.length) rows.push(sectionRow(t(id), content));
+    if (content.length) children.push(...sectionBlock(accent, t(id), content));
   });
   customSections.forEach((cs) => {
     if (!cs.name) return;
     const content = (cs.content || '').split('\n').filter((l) => l.trim()).map(bodyPara);
-    if (content.length) rows.push(sectionRow(cs.name, content));
+    if (content.length) children.push(...sectionBlock(accent, cs.name, content));
   });
-
-  if (rows.length) {
-    children.push(
-      new Table({
-        width: { size: LABEL_W + CONTENT_W, type: WidthType.DXA },
-        columnWidths: [LABEL_W, CONTENT_W],
-        borders: {
-          top: NONE, bottom: NONE, left: NONE, right: NONE,
-          insideVertical: NONE,
-          insideHorizontal: { style: BorderStyle.SINGLE, size: 4, color: C.sep },
-        },
-        rows,
-      })
-    );
-  }
 
   // ── Generate document ──────────────────────────────────────────────────────
   const doc = new Document({
@@ -297,7 +243,7 @@ export const exportToDocx = async (cvData) => {
     },
     sections: [
       {
-        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: dxa(36), right: dxa(36), bottom: dxa(36), left: dxa(36) } } },
+        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: dxa(36), right: dxa(40), bottom: dxa(36), left: dxa(40) } } },
         children,
       },
     ],
