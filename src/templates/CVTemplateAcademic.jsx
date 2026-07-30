@@ -9,17 +9,17 @@ const css = `
 
   .ac-cv {
     font-family: Georgia, Cambria, "Times New Roman", "Noto Serif", serif;
-    font-size: calc(10.6pt * var(--cv-size-scale, 1));
-    line-height: var(--cv-line-height, 1.42);
+    font-size: calc(10.4pt * var(--cv-size-scale, 1));
+    line-height: var(--cv-line-height, 1.36);
     color: #222;
     background: #fff;
     width: 210mm;
     min-height: 297mm;
-    padding: 16mm 18mm;
+    padding: 14mm 16mm;
   }
 
   /* ── HEADER (centered) ── */
-  .ac-header { text-align: center; margin-bottom: 14px; }
+  .ac-header { text-align: center; margin-bottom: 10px; }
   .ac-photo {
     width: 88px; height: 88px; object-fit: cover;
     display: block; margin: 0 auto 8px;
@@ -37,18 +37,18 @@ const css = `
   .ac-contact-sep { color: #bbb; margin: 0 7px; }
 
   /* ── SECTIONS ── */
-  .ac-section { margin-bottom: 12px; }
+  .ac-section { margin-bottom: 9px; }
   .ac-section:last-child { margin-bottom: 0; }
   .ac-section-title {
     font-size: 0.95em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     color: var(--ac-accent, #2563eb);
     border-bottom: 1.5px solid var(--ac-accent, #2563eb);
-    padding-bottom: 2px; margin-bottom: 7px;
+    padding-bottom: 2px; margin-bottom: 5px;
   }
   .ac-summary { color: #333; text-align: justify; }
 
   /* ── ENTRIES ── */
-  .ac-entry { margin-bottom: 9px; }
+  .ac-entry { margin-bottom: 7px; }
   .ac-entry:last-child { margin-bottom: 0; }
   .ac-entry-head {
     display: flex; justify-content: space-between; align-items: baseline;
@@ -57,13 +57,15 @@ const css = `
   .ac-entry-title { font-weight: 700; color: #111; }
   .ac-entry-date { font-style: italic; color: #555; font-size: 0.9em; white-space: nowrap; }
   .ac-entry-sub { color: #444; font-size: 0.95em; margin-top: 1px; }
-  .ac-bullets { margin: 4px 0 0; padding-left: 18px; }
-  .ac-bullets li { margin-bottom: 2px; color: #333; }
+  .ac-bullets { margin: 3px 0 0; padding-left: 17px; }
+  .ac-bullets li { margin-bottom: 1.5px; color: #333; }
 
   .ac-inline { color: #333; }
   .ac-inline strong { color: #111; }
 
-  @media print { .ac-cv { padding: 12mm 16mm; } }
+  /* At print time, don't force a full-page min-height: the mm→px rounding of
+     297mm spills a sliver onto a blank 2nd page. Let content flow instead. */
+  @media print { .ac-cv { min-height: auto; padding: 12mm 14mm; } }
 `;
 
 // Turns an entry into a clean list of bullet strings (from an explicit `bullets`
