@@ -62,6 +62,8 @@ const css = `
 
   .ac-inline { color: #333; }
   .ac-inline strong { color: #111; }
+  .ac-skill-line { color: #333; margin-bottom: 1px; }
+  .ac-skill-line strong { color: #111; }
 
   /* At print time, don't force a full-page min-height: the mm→px rounding of
      297mm spills a sliver onto a blank 2nd page. Let content flow instead. */
@@ -184,16 +186,20 @@ export default function CVTemplateAcademic({ data }) {
       case 'skills':
         return d.skills?.length > 0 ? (
           <Section key={sid} title={t('skills')}>
-            <p className="ac-inline">
-              {d.skills
-                .map((sk) => {
-                  const name = typeof sk === 'string' ? sk : sk.name;
-                  const lvl = typeof sk === 'object' && sk.showLevel && sk.level ? ` (${sk.level})` : '';
-                  return name ? `${name}${lvl}` : '';
-                })
-                .filter(Boolean)
-                .join('   ·   ')}
-            </p>
+            {d.skills.map((sk, i) => {
+              const name = typeof sk === 'string' ? sk : sk.name;
+              if (!name) return null;
+              const lvl = typeof sk === 'object' && sk.showLevel && sk.level ? ` (${sk.level})` : '';
+              // "Catégorie : éléments" → the label is bolded (BIT / academic style).
+              const sep = name.indexOf(' : ');
+              return (
+                <div key={i} className="ac-skill-line">
+                  {sep !== -1
+                    ? <><strong>{name.slice(0, sep)} :</strong>{name.slice(sep + 2)}</>
+                    : <>{name}{lvl}</>}
+                </div>
+              );
+            })}
           </Section>
         ) : null;
       case 'languages':
