@@ -312,9 +312,9 @@ export default function CVTemplateJobLeads({ data }) {
   if (d.nationality) birthBits.push(d.nationality);
 
   const contactParts = [
-    d.address,
     d.phone && { text: d.phone, href: `tel:${d.phone}` },
     d.email && { text: d.email, href: `mailto:${d.email}` },
+    d.address,
     d.linkedin && { text: d.linkedin, href: normalizeHref(d.linkedin) },
     d.github && { text: d.github, href: normalizeHref(d.github) },
     d.website && { text: d.website, href: normalizeHref(d.website) },
