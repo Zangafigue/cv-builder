@@ -10,22 +10,22 @@ const css = `
   .ac-cv {
     font-family: Georgia, Cambria, "Times New Roman", "Noto Serif", serif;
     font-size: calc(10pt * var(--cv-size-scale, 1));
-    line-height: var(--cv-line-height, 1.35);
+    line-height: var(--cv-line-height, 1.3);
     color: #222;
     background: #fff;
     width: 210mm;
     min-height: 297mm;
-    padding: 14mm 16mm;
+    padding: 12mm 15mm;
   }
 
   /* ── HEADER (centered) ── */
-  .ac-header { text-align: center; margin-bottom: 8px; }
+  .ac-header { text-align: center; margin-bottom: 6px; }
   .ac-photo {
     width: 88px; height: 88px; object-fit: cover;
     display: block; margin: 0 auto 8px;
   }
   .ac-name {
-    font-size: 1.85em; font-weight: 700; letter-spacing: 0.5px;
+    font-size: 1.75em; font-weight: 700; letter-spacing: 0.5px;
     color: #111; line-height: 1.1;
   }
   .ac-title { font-size: 1.05em; color: #555; margin-top: 3px; }
@@ -37,18 +37,18 @@ const css = `
   .ac-contact-sep { color: #bbb; margin: 0 7px; }
 
   /* ── SECTIONS ── */
-  .ac-section { margin-bottom: 7px; }
+  .ac-section { margin-bottom: 5px; }
   .ac-section:last-child { margin-bottom: 0; }
   .ac-section-title {
     font-size: 0.95em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     color: var(--ac-accent, #2563eb);
     border-bottom: 1.5px solid var(--ac-accent, #2563eb);
-    padding-bottom: 2px; margin-bottom: 4px;
+    padding-bottom: 2px; margin-bottom: 3px;
   }
   .ac-summary { color: #333; text-align: justify; }
 
   /* ── ENTRIES ── */
-  .ac-entry { margin-bottom: 5px; }
+  .ac-entry { margin-bottom: 3px; }
   .ac-entry:last-child { margin-bottom: 0; }
   .ac-entry-head {
     display: flex; justify-content: space-between; align-items: baseline;
@@ -65,7 +65,7 @@ const css = `
 
   /* At print time, don't force a full-page min-height: the mm→px rounding of
      297mm spills a sliver onto a blank 2nd page. Let content flow instead. */
-  @media print { .ac-cv { min-height: auto; padding: 12mm 14mm; } }
+  @media print { .ac-cv { min-height: auto; padding: 10mm 13mm; } }
 `;
 
 // Turns an entry into a clean list of bullet strings (from an explicit `bullets`
