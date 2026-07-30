@@ -12,3 +12,4 @@ export { default as CVTemplateTechnical } from './CVTemplateTechnical';
 export { default as CVTemplateElegant } from './CVTemplateElegant';
 export { default as CVTemplateModernAlt } from './CVTemplateModernAlt';
 export { default as CVTemplateTimeline } from './CVTemplateTimeline';
+export { default as CVTemplateAcademic } from './CVTemplateAcademic';

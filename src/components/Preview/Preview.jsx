@@ -13,7 +13,8 @@ import {
   CVTemplateATS2, 
   CVTemplateATS3, 
   CVTemplateJobLeads,
-  CVTemplateBIT
+  CVTemplateBIT,
+  CVTemplateAcademic
 } from '../../templates';
 import { mapCvDataToTemplate } from '../../utils/templateMapper';
 import ErrorBoundary from '../ui/ErrorBoundary';
@@ -71,6 +72,9 @@ const Preview = ({ overrideData } = {}) => {
 
       {/* BIT Template */}
       {cvData.template === 'bit' && <CVTemplateBIT data={templateData} />}
+
+      {/* Academic / classic ATS Template */}
+      {cvData.template === 'academic' && <CVTemplateAcademic data={templateData} />}
       </ErrorBoundary>
     </div>
   );

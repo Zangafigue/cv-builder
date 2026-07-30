@@ -47,6 +47,7 @@ const TEMPLATES = [
   { id: 'ats-2', label: 'ATS Executive ✓' },
   { id: 'ats-3', label: 'ATS Tech ✓' },
   { id: 'jobleads', label: 'JobLeads Pro ✓' },
+  { id: 'academic', label: 'Académique ✓' },
 ];
 
 const FONTS = [
