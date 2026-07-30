@@ -9,8 +9,8 @@ const css = `
 
   .ac-cv {
     font-family: Georgia, Cambria, "Times New Roman", "Noto Serif", serif;
-    font-size: calc(10.4pt * var(--cv-size-scale, 1));
-    line-height: var(--cv-line-height, 1.36);
+    font-size: calc(10pt * var(--cv-size-scale, 1));
+    line-height: var(--cv-line-height, 1.35);
     color: #222;
     background: #fff;
     width: 210mm;
@@ -19,14 +19,14 @@ const css = `
   }
 
   /* ── HEADER (centered) ── */
-  .ac-header { text-align: center; margin-bottom: 10px; }
+  .ac-header { text-align: center; margin-bottom: 8px; }
   .ac-photo {
     width: 88px; height: 88px; object-fit: cover;
     display: block; margin: 0 auto 8px;
   }
   .ac-name {
-    font-size: 2em; font-weight: 700; letter-spacing: 0.5px;
-    color: #111; line-height: 1.12;
+    font-size: 1.85em; font-weight: 700; letter-spacing: 0.5px;
+    color: #111; line-height: 1.1;
   }
   .ac-title { font-size: 1.05em; color: #555; margin-top: 3px; }
   .ac-contact {
@@ -37,18 +37,18 @@ const css = `
   .ac-contact-sep { color: #bbb; margin: 0 7px; }
 
   /* ── SECTIONS ── */
-  .ac-section { margin-bottom: 9px; }
+  .ac-section { margin-bottom: 7px; }
   .ac-section:last-child { margin-bottom: 0; }
   .ac-section-title {
     font-size: 0.95em; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
     color: var(--ac-accent, #2563eb);
     border-bottom: 1.5px solid var(--ac-accent, #2563eb);
-    padding-bottom: 2px; margin-bottom: 5px;
+    padding-bottom: 2px; margin-bottom: 4px;
   }
   .ac-summary { color: #333; text-align: justify; }
 
   /* ── ENTRIES ── */
-  .ac-entry { margin-bottom: 7px; }
+  .ac-entry { margin-bottom: 5px; }
   .ac-entry:last-child { margin-bottom: 0; }
   .ac-entry-head {
     display: flex; justify-content: space-between; align-items: baseline;
@@ -57,8 +57,8 @@ const css = `
   .ac-entry-title { font-weight: 700; color: #111; }
   .ac-entry-date { font-style: italic; color: #555; font-size: 0.9em; white-space: nowrap; }
   .ac-entry-sub { color: #444; font-size: 0.95em; margin-top: 1px; }
-  .ac-bullets { margin: 3px 0 0; padding-left: 17px; }
-  .ac-bullets li { margin-bottom: 1.5px; color: #333; }
+  .ac-bullets { margin: 2px 0 0; padding-left: 17px; }
+  .ac-bullets li { margin-bottom: 1px; color: #333; }
 
   .ac-inline { color: #333; }
   .ac-inline strong { color: #111; }
