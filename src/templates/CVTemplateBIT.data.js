@@ -3,16 +3,16 @@
 export const defaultData = {
   name: "ZANGAFIGUE MATHIAS TRAORE",
   phone: "+226 07 58 02 39",
-  email: "mathiastrore08@gmail.com",
+  email: "mathiaszangafigue@gmail.com",
   github: "github.com/Zangafigue",
   address: "Koudougou, Burkina Faso",
 
   summary:
     "Second-year Computer Science student (Programming & Entrepreneurship) at the Burkina " +
-    "Institute of Technology (BIT). Passionate about full-stack web and mobile development, " +
-    "I build end-to-end applications from architecture to deployment. Lead Developer of " +
-    "AgroConnectBF (team of 5) and author of GymX v2 (React 19 + Supabase). Certified by " +
-    "Google (Project Management) and Anthropic (AI & MCP). Rigorous, autonomous, and team-oriented.",
+    "Institute of Technology (BIT). Web and mobile developer building products with React, " +
+    "Flutter and Python/Node.js. Recently completed a developer internship at WoeLab/HubCity " +
+    "in Lomé, contributing to the audit, documentation and MVP consolidation of SCoPE. " +
+    "Interested in applied AI, cybersecurity and product entrepreneurship.",
 
   education: [
     {
@@ -67,6 +67,15 @@ export const defaultData = {
   ],
 
   experience: [
+    {
+      title: "Web & Mobile Developer Intern – WoeLab / HubCity Africa",
+      org: "AIESEC Global Talent · Lomé, Togo",
+      period: "Aug. 2026 – Sept. 26, 2026",
+      bullets: [
+        "Audited and documented three SCoPE codebases: Flutter web, Flutter mobile and NestJS backend.",
+        "Contributed to the administration dashboard, MVP consolidation, testing, Git workflows and technical handoff.",
+      ],
+    },
     {
       title: "Lead Developer – AgroConnectBF",
       org: "BIT Academic Project · Koudougou, Burkina Faso",

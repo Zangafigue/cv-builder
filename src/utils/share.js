@@ -5,7 +5,7 @@ const SHARE_TEXT = 'Crée un CV pro gratuitement en quelques minutes 🚀';
 // Feedback collection. Set this to your Google Form / Tally URL to collect
 // structured feedback; while empty, the button falls back to a prefilled email.
 export const FEEDBACK_URL = 'https://tally.so/r/rjqrG2';
-const FEEDBACK_EMAIL = 'mathiastraore08@gmail.com';
+const FEEDBACK_EMAIL = 'mathiaszangafigue@gmail.com';
 
 // Shares the platform link via the native share sheet (WhatsApp, status, …) on
 // mobile, with a desktop fallback that copies the link (or opens WhatsApp web).
